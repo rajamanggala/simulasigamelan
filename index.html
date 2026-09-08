@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulator Gamelan — Demung Pelog</title>
+<style>
+  :root{
+    --bg-deep:#07080b;
+    --metal-hi:#2c303a; --metal-lo:#101218; --metal-rim:#454b5a;
+    --panel-edge:#040507;
+    --ink:#eef1f6; --ink-dim:#828aa0; --brass:#cda43a; --red:#ff5050;
+    --k0:#2fe6e6; --k1:#3ef0a8; --k2:#3fd0e6; --k3:#3fa9ff;
+    --k4:#8f9bff; --k5:#c98cff; --k6:#ff86d6; --k7:#ff9a4a;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; min-height:100%;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 3px),
+      radial-gradient(140% 100% at 50% -10%, #1b1e27 0%, var(--bg-deep) 60%);
+    color:var(--ink); font-family:"Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    display:flex; justify-content:center; user-select:none;
+  }
+  #app{ display:flex; flex-direction:column; gap:16px; padding:22px 14px 34px; width:100%; max-width:1480px; }
+
+  /* ---------- Brand plate ---------- */
+  .brand-plate{
+    display:flex; align-items:center; gap:12px; padding:14px 20px; border-radius:12px;
+    background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+    border:1px solid var(--panel-edge);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), inset 0 -1px 0 rgba(0,0,0,.6), 0 10px 24px -12px #000;
+    position:relative;
+  }
+  .brand-led{
+    width:10px; height:10px; border-radius:50%; flex-shrink:0;
+    background:radial-gradient(circle at 35% 30%, #baffcf, var(--k1) 55%, #0a5c39 100%);
+    box-shadow:0 0 8px 1px var(--k1);
+    animation:blink 2.6s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .brand-text h1{ margin:0; font-size:19px; font-weight:800; letter-spacing:.6px; }
+  .brand-sub{ font-size:11px; color:var(--brass); font-weight:700; letter-spacing:1.5px; margin-top:2px; }
+
+  /* ---------- Panel dasar (rack module) ---------- */
+  .panel{
+    position:relative; width:100%;
+    background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+    border:1px solid var(--panel-edge); border-radius:12px; padding:16px 20px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.55), 0 10px 22px -12px #000;
+  }
+  .panel h2{ margin:0 0 10px; font-size:12px; color:var(--ink-dim); font-weight:800; letter-spacing:1.2px; }
+  .screw{ position:absolute; width:7px; height:7px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #a8adb8, #1b1d24 72%);
+    box-shadow:0 1px 1px rgba(0,0,0,.85), inset 0 0 1px rgba(255,255,255,.35); }
+  .screw::after{ content:''; position:absolute; top:50%; left:12%; right:12%; height:1px;
+    background:rgba(0,0,0,.65); transform:rotate(35deg); }
+  .screw.tl{ top:7px; left:7px; } .screw.tr{ top:7px; right:7px; }
+  .screw.bl{ bottom:7px; left:7px; } .screw.br{ bottom:7px; right:7px; }
+
+  /* ---------- Pemilih lagu ---------- */
+  .song-select-row{ display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .song-select-row label{ font-size:12px; color:var(--ink-dim); font-weight:700; }
+  select{
+    background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink);
+    padding:8px 12px; border-radius:7px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  select:focus{ outline:none; border-color:var(--k3); }
+  .dummy-badge{
+    font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 7px; border-radius:5px;
+    background:#4a3a15; color:#ffcf3f; display:none;
+  }
+  .dummy-badge.show{ display:inline-block; }
+
+  /* ---------- Panel notasi ala layar LCD ---------- */
+  .notation-panel-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .notation-header{ text-align:center; flex:1; }
+  .notation-header .title{ font-size:17px; font-weight:800; color:var(--ink); }
+  .notation-header .subtitle{ font-size:12px; font-style:italic; color:var(--ink-dim); margin-top:2px; }
+  .minimize-btn{
+    background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim); color:var(--ink-dim);
+    width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:15px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; line-height:1;
+  }
+  .minimize-btn:hover{ border-color:var(--k3); color:var(--ink); }
+  .notation-body{
+    overflow:hidden; max-height:400px;
+    transition:max-height 220ms ease, opacity 180ms ease, margin-top 220ms ease; opacity:1;
+  }
+  .notation-body.collapsed{ max-height:0; opacity:0; margin-top:0; }
+
+  .legend{ font-size:11px; color:var(--ink-dim); text-align:center; margin-bottom:10px; line-height:1.5; }
+  .staff{
+    background:
+      linear-gradient(#1c2130 1px, transparent 1px) 0 0/100% 32px,
+      linear-gradient(90deg, #1c2130 1px, transparent 1px) 0 0/12.5% 100%,
+      #0c0e13;
+    border:1px solid #23262f; border-radius:6px; padding:6px 10px;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
+  }
+  .staff-row{ display:flex; align-items:center; height:32px; font-family:"Consolas","Courier New",monospace;
+    font-weight:800; font-size:16px; color:var(--red); letter-spacing:1px; white-space:pre;
+    text-shadow:0 0 6px rgba(255,80,80,.35); }
+  .staff-row .bk-label{ color:var(--ink-dim); font-size:11px; font-weight:700; margin-right:8px; font-family:"Segoe UI", sans-serif; text-shadow:none; }
+
+  /* ---------- Grid tengah: kontrol suara/sample | backing track/kalibrasi ---------- */
+  .mid-grid{ display:grid; grid-template-columns:1fr; gap:16px; }
+  .mid-col{ display:flex; flex-direction:column; gap:16px; }
+  @media (min-width:900px){
+    .mid-grid{ grid-template-columns:1fr 1fr; }
+  }
+
+  /* ---------- Kalibrasi tombol ---------- */
+  .controls{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  button{
+    background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim); color:var(--ink);
+    padding:9px 18px; border-radius:8px; font-weight:700; letter-spacing:.5px; cursor:pointer; font-size:13px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  button:hover{ border-color:var(--k3); }
+  button:disabled{ opacity:.5; cursor:default; }
+  .status{ font-size:12px; color:var(--ink-dim); white-space:pre-line; }
+  .status.ok{ color:var(--k1); }
+  .status.err{ color:#ff6b7a; }
+
+  /* ---------- Slider gaya LED metalik ---------- */
+  .volume-row{ display:flex; align-items:center; gap:12px; width:100%; }
+  .volume-row label{ font-size:12px; color:var(--ink-dim); min-width:110px; }
+  .volume-row .val{ font-size:11px; color:var(--ink-dim); min-width:34px; text-align:right; font-variant-numeric:tabular-nums; }
+
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none; flex:1; height:8px; border-radius:999px;
+    background:#0c0d12; border:1px solid #000; cursor:pointer;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.04);
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%; margin-top:-1px;
+    background:radial-gradient(circle at 35% 30%, #e7ebf3, #9aa1b2 60%, #4a4f5c 100%);
+    border:1px solid #000; cursor:pointer; box-shadow:0 0 0 3px rgba(255,255,255,.05), 0 2px 4px rgba(0,0,0,.6);
+  }
+  input[type="range"]::-moz-range-track{ height:8px; border-radius:999px; background:#0c0d12; }
+  input[type="range"]::-moz-range-thumb{
+    width:16px; height:16px; border-radius:50%; border:1px solid #000;
+    background:radial-gradient(circle at 35% 30%, #e7ebf3, #9aa1b2 60%, #4a4f5c 100%);
+  }
+
+  .toggle-row{ display:flex; align-items:center; gap:10px; }
+  .toggle-row label{ font-size:12px; color:var(--ink-dim); }
+  .switch{
+    position:relative; width:46px; height:24px; border-radius:999px;
+    background:#12141a; border:1px solid var(--metal-rim); cursor:pointer; flex-shrink:0;
+    transition:background 120ms ease, border-color 120ms ease;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.7);
+  }
+  .switch .knob{
+    position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #cfd3dd, #6b7080); transition:left 120ms ease, background 120ms ease;
+  }
+  .switch.on{ background:color-mix(in srgb, var(--k1) 28%, #12141a); border-color:var(--k1); }
+  .switch.on .knob{ left:24px; background:radial-gradient(circle at 35% 30%, #baffcf, var(--k1)); box-shadow:0 0 6px var(--k1); }
+  .toggle-state{ font-size:11px; font-weight:700; letter-spacing:.3px; }
+  .toggle-state.on{ color:var(--k1); }
+  .toggle-state.off{ color:var(--ink-dim); }
+
+  /* ---------- Progress bar ---------- */
+  .player-row{ display:flex; align-items:center; gap:10px; width:100%; margin-top:12px; }
+  .time-label{ font-size:11px; color:var(--ink-dim); font-variant-numeric:tabular-nums; min-width:36px; }
+  .time-label.end{ text-align:right; }
+
+  /* ---------- Kalibrasi tombol: input trigger + keybed ---------- */
+  .keybed-panel{ padding:20px 20px 22px; }
+  .keys-wrap{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .key-col{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1 1 80px; min-width:70px; max-width:180px; }
+  .trigger-input{
+    width:100%; text-align:center; background:var(--metal-lo); border:1px solid var(--metal-rim);
+    color:var(--ink); border-radius:6px; padding:5px 4px; font-size:12px; font-weight:700;
+    letter-spacing:.5px; text-transform:lowercase;
+  }
+  .trigger-input:focus{ outline:none; border-color:var(--k3); }
+  .trigger-input.dup{ border-color:#ff6b7a; color:#ff6b7a; }
+
+  .key{
+    width:100%; height:150px; border-radius:12px; position:relative; cursor:pointer;
+    background:linear-gradient(180deg, #262a34 0%, #14161c 88%, #0a0b0e 100%);
+    border:1px solid #000; border-top:1px solid #3c4150;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:14px;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.05), inset 0 -6px 10px rgba(0,0,0,.55), 0 6px 12px -6px #000;
+    transition:transform 70ms ease, background 70ms ease, border-color 70ms ease, box-shadow 70ms ease;
+  }
+  .key.low{ border-style:dashed; }
+  .key .num{ font-size:26px; font-weight:800; color:var(--ink-dim); }
+  .key .num sub{ font-size:13px; }
+  .key .sol{ font-size:11px; color:var(--ink-dim); margin-top:4px; letter-spacing:.5px; }
+
+  .key[data-k="0"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k0) 45%, #262a34), color-mix(in srgb, var(--k0) 20%, #14161c)); border-color:var(--k0); box-shadow:0 0 26px -4px var(--k0), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="0"].active .num, .key[data-k="0"].active .sol{ color:var(--k0); text-shadow:0 0 8px var(--k0); }
+  .key[data-k="1"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k1) 45%, #262a34), color-mix(in srgb, var(--k1) 20%, #14161c)); border-color:var(--k1); box-shadow:0 0 26px -4px var(--k1), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="1"].active .num, .key[data-k="1"].active .sol{ color:var(--k1); text-shadow:0 0 8px var(--k1); }
+  .key[data-k="2"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k2) 45%, #262a34), color-mix(in srgb, var(--k2) 20%, #14161c)); border-color:var(--k2); box-shadow:0 0 26px -4px var(--k2), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="2"].active .num, .key[data-k="2"].active .sol{ color:var(--k2); text-shadow:0 0 8px var(--k2); }
+  .key[data-k="3"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k3) 45%, #262a34), color-mix(in srgb, var(--k3) 20%, #14161c)); border-color:var(--k3); box-shadow:0 0 26px -4px var(--k3), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="3"].active .num, .key[data-k="3"].active .sol{ color:var(--k3); text-shadow:0 0 8px var(--k3); }
+  .key[data-k="4"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k4) 45%, #262a34), color-mix(in srgb, var(--k4) 20%, #14161c)); border-color:var(--k4); box-shadow:0 0 26px -4px var(--k4), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="4"].active .num, .key[data-k="4"].active .sol{ color:var(--k4); text-shadow:0 0 8px var(--k4); }
+  .key[data-k="5"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k5) 45%, #262a34), color-mix(in srgb, var(--k5) 20%, #14161c)); border-color:var(--k5); box-shadow:0 0 26px -4px var(--k5), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="5"].active .num, .key[data-k="5"].active .sol{ color:var(--k5); text-shadow:0 0 8px var(--k5); }
+  .key[data-k="6"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k6) 45%, #262a34), color-mix(in srgb, var(--k6) 20%, #14161c)); border-color:var(--k6); box-shadow:0 0 26px -4px var(--k6), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="6"].active .num, .key[data-k="6"].active .sol{ color:var(--k6); text-shadow:0 0 8px var(--k6); }
+  .key[data-k="7"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k7) 45%, #262a34), color-mix(in srgb, var(--k7) 20%, #14161c)); border-color:var(--k7); box-shadow:0 0 26px -4px var(--k7), inset 0 2px 0 rgba(255,255,255,.15); }
+  .key[data-k="7"].active .num, .key[data-k="7"].active .sol{ color:var(--k7); text-shadow:0 0 8px var(--k7); }
+
+  .key .badge{
+    position:absolute; top:6px; right:6px; font-size:9px; font-weight:800; padding:2px 5px; border-radius:4px;
+    display:none;
+  }
+  .key .badge.missing{ display:block; background:#511; color:#f77; }
+
+  @media (min-width:900px){
+    .keys-wrap{ flex-wrap:nowrap; gap:12px; }
+    .key-col{ flex:1 1 0; max-width:none; }
+    .key{ height:210px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="brand-plate">
+    <div class="brand-led"></div>
+    <div class="brand-text">
+      <h1>SIMULATOR GAMELAN</h1>
+      <div class="brand-sub">DEMUNG · LARAS PELOG</div>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="song-select-row">
+      <label for="songSelect">Pilih lagu:</label>
+      <select id="songSelect"></select>
+      <span class="dummy-badge" id="dummyBadge">NOTASI DUMMY</span>
+    </div>
+    <div class="notation-panel-header">
+      <div class="notation-header">
+        <div class="title" id="songTitle">—</div>
+        <div class="subtitle" id="songSubtitle">—</div>
+      </div>
+      <button class="minimize-btn" id="minimizeBtn" title="Sembunyikan/tampilkan notasi">−</button>
+    </div>
+    <div class="notation-body" id="notationBody">
+      <div class="legend">) = Kenong &nbsp;&nbsp;&nbsp; ( ) = Gong</div>
+      <div class="staff" id="staff"></div>
+    </div>
+  </div>
+
+  <div class="mid-grid">
+    <div class="mid-col">
+      <div class="panel">
+        <h2>KONTROL SUARA</h2>
+        <div class="volume-row">
+          <label for="instVol">Volume Demung</label>
+          <input type="range" id="instVol" min="0" max="100" value="90">
+          <span class="val" id="instVolVal">90%</span>
+        </div>
+        <div class="volume-row" style="margin-top:10px;">
+          <label for="trackVol">Volume Backtrack</label>
+          <input type="range" id="trackVol" min="0" max="100" value="70">
+          <span class="val" id="trackVolVal">70%</span>
+        </div>
+        <div class="toggle-row" style="margin-top:14px;">
+          <div class="switch on" id="sustainSwitch"><div class="knob"></div></div>
+          <label>Sustain (tahan tombol untuk berdenging)</label>
+          <span class="toggle-state on" id="sustainState">ON</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>SAMPLE DEMUNG</h2>
+        <div class="status" id="sampleStatus">Memuat sample dari folder sampler/ ...</div>
+      </div>
+    </div>
+
+    <div class="mid-col">
+      <div class="panel">
+        <h2>BACKING TRACK</h2>
+        <div class="controls">
+          <button id="playBtn" disabled>▶ Putar</button>
+          <button id="stopBtn" disabled>■ Stop</button>
+          <span class="status" id="trackStatus">Memuat ...</span>
+        </div>
+        <div class="player-row">
+          <span class="time-label" id="timeElapsed">0:00</span>
+          <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" value="0" step="0.1">
+          <span class="time-label end" id="timeTotal">0:00</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>KALIBRASI TOMBOL</h2>
+        <div class="controls">
+          <button id="resetMappingBtn">↺ Reset ke default</button>
+          <span class="status" id="mappingStatus">Tersimpan untuk sesi ini (hilang jika tab/browser ditutup)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel keybed-panel">
+    <h2>TUTS DEMUNG</h2>
+    <div class="keys-wrap" id="keysWrap"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- Baut dekoratif di tiap panel ----------
+  document.querySelectorAll('.panel, .brand-plate').forEach(p => {
+    ['tl','tr','bl','br'].forEach(pos => {
+      const s = document.createElement('div');
+      s.className = 'screw ' + pos;
+      p.appendChild(s);
+    });
+  });
+
+  // ---------- Data lagu ----------
+  const songs = [
+    {
+      id: 'gugurgunung',
+      title: 'Lancaran "GUGUR GUNUNG"',
+      subtitle: 'laras Pelog Pathet',
+      file: 'gugurgunung.mp3',
+      dummy: false,
+      notationRows: [
+        { label: 'Bk', text: '.  3  2  3     .  6  .  5     .  7  .  6     .  3  (2)' },
+        { label: '',   text: '.  6  .  7)    .  6  .  7)    .  3  .  5)    .  7  (6)' },
+        { label: '',   text: '.  2  .  7)    .  2  .  7)    .  6  .  5)    .  7  (3)' },
+        { label: '',   text: '.  5  .  6)    .  5  .  6)    .  2  .  3)    .  6  (5)' },
+        { label: '',   text: '.  2  .  3)    .  2  .  3)    .  6  .  5)    .  6  (2)' }
+      ]
+    },
+    {
+      id: 'ladrangpendet',
+      title: 'Ladrang "PENDET"',
+      subtitle: 'laras Pelog Pathet — notasi placeholder, menunggu transkripsi asli',
+      file: 'ladrangpendet.mp3',
+      dummy: true,
+      notationRows: [
+        { label: 'Bk', text: '.  .  .  .     .  .  .  .     .  .  .  .     .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
+        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' }
+      ]
+    }
+  ];
+  let currentSongIndex = 0;
+
+  const songSelect = document.getElementById('songSelect');
+  const songTitleEl = document.getElementById('songTitle');
+  const songSubtitleEl = document.getElementById('songSubtitle');
+  const dummyBadge = document.getElementById('dummyBadge');
+  const staffEl = document.getElementById('staff');
+
+  songs.forEach((song, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = song.title.replace(/"/g, '');
+    songSelect.appendChild(opt);
+  });
+
+  function renderNotation(song){
+    songTitleEl.textContent = song.title;
+    songSubtitleEl.textContent = song.subtitle;
+    dummyBadge.classList.toggle('show', !!song.dummy);
+    staffEl.innerHTML = '';
+    song.notationRows.forEach(row => {
+      const div = document.createElement('div');
+      div.className = 'staff-row';
+      const label = document.createElement('span');
+      label.className = 'bk-label';
+      label.textContent = row.label || '';
+      label.style.width = '18px';
+      label.style.display = 'inline-block';
+      div.appendChild(label);
+      const text = document.createElement('span');
+      text.textContent = row.text;
+      div.appendChild(text);
+      staffEl.appendChild(div);
+    });
+  }
+
+  function loadSong(index){
+    currentSongIndex = index;
+    const song = songs[index];
+    renderNotation(song);
+
+    backtrack.pause();
+    playBtn.disabled = true;
+    stopBtn.disabled = true;
+    progressSlider.value = 0;
+    updateSliderFill(progressSlider, 'var(--k3)');
+    timeElapsed.textContent = '0:00';
+    timeTotal.textContent = '0:00';
+    trackStatusEl.textContent = `Memuat ${song.file} ...`;
+    trackStatusEl.className = 'status';
+
+    backtrack.src = song.file;
+    backtrack.load();
+  }
+
+  songSelect.addEventListener('change', () => {
+    loadSong(parseInt(songSelect.value));
+  });
+
+  // ---------- Minimize panel notasi ----------
+  const minimizeBtn = document.getElementById('minimizeBtn');
+  const notationBody = document.getElementById('notationBody');
+  let notationCollapsed = false;
+  minimizeBtn.addEventListener('click', () => {
+    notationCollapsed = !notationCollapsed;
+    notationBody.classList.toggle('collapsed', notationCollapsed);
+    minimizeBtn.textContent = notationCollapsed ? '+' : '−';
+  });
+
+  // ---------- Tombol demung: 0 (6 rendah) lalu 1–7 ----------
+  const keyDefs = [
+    { dataKey: '0', fileKey: '6down', num: '6', sub: '',        sol: 'nem', low: true },
+    { dataKey: '1', fileKey: '1',     num: '1', sub: '',        sol: 'ji' },
+    { dataKey: '2', fileKey: '2',     num: '2', sub: '',        sol: 'ro' },
+    { dataKey: '3', fileKey: '3',     num: '3', sub: '',        sol: 'lu' },
+    { dataKey: '4', fileKey: '4',     num: '4', sub: '',        sol: 'pat' },
+    { dataKey: '5', fileKey: '5',     num: '5', sub: '',        sol: 'ma' },
+    { dataKey: '6', fileKey: '6',     num: '6', sub: '',        sol: 'nem' },
+    { dataKey: '7', fileKey: '7',     num: '7', sub: '',        sol: 'pi' }
+  ];
+
+  // ---------- Kalibrasi tombol: mapping dataKey -> trigger keyboard ----------
+  const MAPPING_SESSION_KEY = 'gamelan_key_mapping';
+  const defaultMapping = {};
+  keyDefs.forEach(def => { defaultMapping[def.dataKey] = def.dataKey; });
+
+  function loadMapping(){
+    try {
+      const raw = sessionStorage.getItem(MAPPING_SESSION_KEY);
+      if (!raw) return { ...defaultMapping };
+      const parsed = JSON.parse(raw);
+      return { ...defaultMapping, ...parsed };
+    } catch (e) {
+      return { ...defaultMapping };
+    }
+  }
+  function saveMapping(){
+    sessionStorage.setItem(MAPPING_SESSION_KEY, JSON.stringify(mapping));
+  }
+
+  let mapping = loadMapping();
+  let reverseMap = {};
+
+  function rebuildReverseMap(){
+    reverseMap = {};
+    Object.entries(mapping).forEach(([dataKey, trigger]) => {
+      if (trigger) reverseMap[trigger.toLowerCase()] = dataKey;
+    });
+  }
+
+  function refreshDupWarnings(){
+    const counts = {};
+    Object.values(mapping).forEach(t => {
+      if (!t) return;
+      const key = t.toLowerCase();
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    keyDefs.forEach(def => {
+      const input = triggerInputEls[def.dataKey];
+      const t = (mapping[def.dataKey] || '').toLowerCase();
+      const isDup = t && counts[t] > 1;
+      input.classList.toggle('dup', isDup);
+    });
+  }
+
+  const keysWrap = document.getElementById('keysWrap');
+  const keyEls = {};
+  const badgeEls = {};
+  const triggerInputEls = {};
+
+  keyDefs.forEach(def => {
+    const col = document.createElement('div');
+    col.className = 'key-col';
+
+    const input = document.createElement('input');
+    input.className = 'trigger-input';
+    input.maxLength = 12;
+    input.value = mapping[def.dataKey] || '';
+    input.dataset.k = def.dataKey;
+    col.appendChild(input);
+    triggerInputEls[def.dataKey] = input;
+
+    const el = document.createElement('div');
+    el.className = 'key' + (def.low ? ' low' : '');
+    el.dataset.k = def.dataKey;
+    el.dataset.file = def.fileKey;
+    const numHtml = def.sub ? `${def.num}<sub>${def.sub}</sub>` : def.num;
+    el.innerHTML = `<div class="badge" id="badge-${def.dataKey}">X</div><div class="num">${numHtml}</div><div class="sol">${def.sol}</div>`;
+    col.appendChild(el);
+
+    keysWrap.appendChild(col);
+    keyEls[def.dataKey] = el;
+    badgeEls[def.dataKey] = el.querySelector(`#badge-${def.dataKey}`);
+  });
+
+  rebuildReverseMap();
+  refreshDupWarnings();
+
+  Object.values(triggerInputEls).forEach(input => {
+    input.addEventListener('input', () => {
+      const dataKey = input.dataset.k;
+      mapping[dataKey] = input.value;
+      saveMapping();
+      rebuildReverseMap();
+      refreshDupWarnings();
+    });
+    input.addEventListener('keydown', (e) => e.stopPropagation());
+    input.addEventListener('keyup', (e) => e.stopPropagation());
+  });
+
+  document.getElementById('resetMappingBtn').addEventListener('click', () => {
+    mapping = { ...defaultMapping };
+    saveMapping();
+    rebuildReverseMap();
+    Object.values(keyDefs).forEach(def => {
+      triggerInputEls[def.dataKey].value = mapping[def.dataKey];
+    });
+    refreshDupWarnings();
+  });
+
+  // ---------- Fill visual LED untuk semua slider ----------
+  function updateSliderFill(el, color){
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const val = parseFloat(el.value) || 0;
+    const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+    el.style.background =
+      `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #0c0d12 ${pct}%, #0c0d12 100%)`;
+  }
+
+  // ---------- Kontrol volume ----------
+  const instVolSlider = document.getElementById('instVol');
+  const instVolVal = document.getElementById('instVolVal');
+  const trackVolSlider = document.getElementById('trackVol');
+  const trackVolVal = document.getElementById('trackVolVal');
+
+  let instVolume = parseInt(instVolSlider.value) / 100;
+  let trackVolume = parseInt(trackVolSlider.value) / 100;
+
+  updateSliderFill(instVolSlider, 'var(--k1)');
+  updateSliderFill(trackVolSlider, 'var(--k1)');
+
+  instVolSlider.addEventListener('input', () => {
+    instVolume = parseInt(instVolSlider.value) / 100;
+    instVolVal.textContent = instVolSlider.value + '%';
+    updateSliderFill(instVolSlider, 'var(--k1)');
+  });
+  trackVolSlider.addEventListener('input', () => {
+    trackVolume = parseInt(trackVolSlider.value) / 100;
+    trackVolVal.textContent = trackVolSlider.value + '%';
+    backtrack.volume = trackVolume;
+    updateSliderFill(trackVolSlider, 'var(--k1)');
+  });
+
+  // ---------- Toggle sustain ----------
+  let sustainOn = true;
+
+  const sustainSwitch = document.getElementById('sustainSwitch');
+  const sustainState = document.getElementById('sustainState');
+  sustainSwitch.addEventListener('click', () => {
+    sustainOn = !sustainOn;
+    sustainSwitch.classList.toggle('on', sustainOn);
+    sustainState.textContent = sustainOn ? 'ON' : 'OFF';
+    sustainState.classList.toggle('on', sustainOn);
+    sustainState.classList.toggle('off', !sustainOn);
+  });
+
+  // ---------- Load 2 set sample per tombol dari folder sampler/: [key].wav (sustain) & [key]short.wav (short) ----------
+  const POOL_SIZE = 6;
+  const poolsLong = {};
+  const poolsShort = {};
+  const poolIndexLong = {};
+  const poolIndexShort = {};
+
+  let loadedCount = 0;
+  let failedList = [];
+  const TOTAL_FILES = keyDefs.length * 2;
+  const sampleStatusEl = document.getElementById('sampleStatus');
+
+  function updateSampleStatus(){
+    const total = loadedCount + failedList.length;
+    if (total < TOTAL_FILES) {
+      sampleStatusEl.textContent = `Memuat... (${total}/${TOTAL_FILES} file diproses)`;
+      sampleStatusEl.className = 'status';
+      return;
+    }
+    if (failedList.length === 0) {
+      sampleStatusEl.textContent = 'Sample demung dimuat ✓';
+      sampleStatusEl.className = 'status ok';
+    } else {
+      sampleStatusEl.textContent = `Baru ${loadedCount}/${TOTAL_FILES} file termuat. Gagal: ${failedList.join(', ')}`;
+      sampleStatusEl.className = 'status err';
+    }
+  }
+
+  function buildPool(dataKey, src, targetPoolsObj){
+    const pool = [];
+    let marked = false;
+    for (let p = 0; p < POOL_SIZE; p++) {
+      const a = new Audio(src);
+      a.preload = 'auto';
+      pool.push(a);
+      if (p === 0) {
+        a.addEventListener('canplaythrough', () => {
+          if (marked) return;
+          marked = true;
+          loadedCount++;
+          updateSampleStatus();
+        }, { once: true });
+        a.addEventListener('error', () => {
+          if (marked) return;
+          marked = true;
+          failedList.push(src);
+          badgeEls[dataKey].classList.add('missing');
+          updateSampleStatus();
+        });
+      }
+    }
+    targetPoolsObj[dataKey] = pool;
+  }
+
+  keyDefs.forEach(def => {
+    buildPool(def.dataKey, `sampler/${def.fileKey}.wav`, poolsLong);
+    buildPool(def.dataKey, `sampler/${def.fileKey}short.wav`, poolsShort);
+    poolIndexLong[def.dataKey] = 0;
+    poolIndexShort[def.dataKey] = 0;
+  });
+
+  function getClip(dataKey){
+    if (sustainOn) {
+      const pool = poolsLong[dataKey];
+      poolIndexLong[dataKey] = (poolIndexLong[dataKey] + 1) % pool.length;
+      return pool[poolIndexLong[dataKey]];
+    } else {
+      const pool = poolsShort[dataKey];
+      poolIndexShort[dataKey] = (poolIndexShort[dataKey] + 1) % pool.length;
+      return pool[poolIndexShort[dataKey]];
+    }
+  }
+
+  const activeClip = {};
+
+  function fadeAndStop(clip){
+    const startVol = clip.volume;
+    const startTime = performance.now();
+    const duration = 120;
+    function step(now){
+      const t = Math.min((now - startTime) / duration, 1);
+      clip.volume = startVol * (1 - t);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        clip.pause();
+        clip.currentTime = 0;
+        clip.volume = instVolume;
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function playNote(dataKey){
+    if (!keyEls[dataKey]) return;
+    keyEls[dataKey].classList.add('active');
+    const clip = getClip(dataKey);
+    if (!clip) return;
+    try {
+      clip.pause();
+      clip.currentTime = 0;
+      clip.volume = instVolume;
+      clip.play().catch(() => {});
+    } catch(e) {}
+
+    if (sustainOn) {
+      activeClip[dataKey] = clip;
+    }
+  }
+
+  function stopNote(dataKey){
+    if (!keyEls[dataKey]) return;
+    keyEls[dataKey].classList.remove('active');
+    const clip = activeClip[dataKey];
+    if (!clip) return;
+    fadeAndStop(clip);
+    delete activeClip[dataKey];
+  }
+
+  Object.values(keyEls).forEach(el => {
+    const dataKey = el.dataset.k;
+    el.addEventListener('mousedown', () => playNote(dataKey));
+    el.addEventListener('mouseup', () => stopNote(dataKey));
+    el.addEventListener('mouseleave', () => stopNote(dataKey));
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); playNote(dataKey); });
+    el.addEventListener('touchend', (e) => { e.preventDefault(); stopNote(dataKey); });
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.repeat) return;
+    const dataKey = reverseMap[e.key.toLowerCase()];
+    if (dataKey !== undefined) playNote(dataKey);
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    const dataKey = reverseMap[e.key.toLowerCase()];
+    if (dataKey !== undefined) stopNote(dataKey);
+  });
+
+  // ---------- Backing track + progress bar ----------
+  const trackStatusEl = document.getElementById('trackStatus');
+  const playBtn = document.getElementById('playBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const progressSlider = document.getElementById('progressSlider');
+  const timeElapsed = document.getElementById('timeElapsed');
+  const timeTotal = document.getElementById('timeTotal');
+  const backtrack = new Audio();
+  backtrack.preload = 'auto';
+  backtrack.volume = trackVolume;
+
+  updateSliderFill(progressSlider, 'var(--k3)');
+
+  function formatTime(sec){
+    if (!isFinite(sec) || sec < 0) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  backtrack.addEventListener('loadedmetadata', () => {
+    progressSlider.max = backtrack.duration;
+    timeTotal.textContent = formatTime(backtrack.duration);
+  });
+  backtrack.addEventListener('canplaythrough', () => {
+    trackStatusEl.textContent = songs[currentSongIndex].file + ' siap diputar';
+    trackStatusEl.className = 'status ok';
+    playBtn.disabled = false;
+  });
+  backtrack.addEventListener('error', () => {
+    trackStatusEl.textContent = `Gagal memuat ${songs[currentSongIndex].file} — pastikan file ada di folder yang sama dengan index.html`;
+    trackStatusEl.className = 'status err';
+  });
+  backtrack.addEventListener('ended', () => {
+    playBtn.disabled = false;
+    stopBtn.disabled = true;
+  });
+
+  let isDraggingProgress = false;
+  backtrack.addEventListener('timeupdate', () => {
+    if (isDraggingProgress) return;
+    progressSlider.value = backtrack.currentTime;
+    timeElapsed.textContent = formatTime(backtrack.currentTime);
+    updateSliderFill(progressSlider, 'var(--k3)');
+  });
+  progressSlider.addEventListener('input', () => {
+    isDraggingProgress = true;
+    timeElapsed.textContent = formatTime(parseFloat(progressSlider.value));
+    updateSliderFill(progressSlider, 'var(--k3)');
+  });
+  progressSlider.addEventListener('change', () => {
+    backtrack.currentTime = parseFloat(progressSlider.value);
+    isDraggingProgress = false;
+  });
+
+  playBtn.addEventListener('click', () => {
+    backtrack.volume = trackVolume;
+    backtrack.play();
+    playBtn.disabled = true;
+    stopBtn.disabled = false;
+  });
+  stopBtn.addEventListener('click', () => {
+    backtrack.pause();
+    backtrack.currentTime = 0;
+    playBtn.disabled = false;
+    stopBtn.disabled = true;
+  });
+
+  // ---------- Muat lagu pertama saat halaman dibuka ----------
+  loadSong(0);
+})();
+</script>
+</body>
+</html>
