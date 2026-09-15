@@ -179,6 +179,21 @@
   .trigger-input:focus{ outline:none; border-color:var(--k3); }
   .trigger-input.dup{ border-color:#ff6b7a; color:#ff6b7a; }
 
+  /* ---------- Tombol assign MIDI per not ---------- */
+  .midi-assign-btn{
+    width:100%; text-align:center; padding:5px 4px; font-size:10.5px; font-weight:700;
+    letter-spacing:.3px; border-radius:6px; background:var(--metal-lo); border:1px solid var(--metal-rim);
+    color:var(--ink-dim); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .midi-assign-btn:hover{ border-color:var(--brass); color:var(--ink); }
+  .midi-assign-btn.assigned{ color:var(--brass); border-color:color-mix(in srgb, var(--brass) 50%, var(--metal-rim)); }
+  .midi-assign-btn.learning{
+    color:#000; background:var(--brass); border-color:var(--brass);
+    animation:learnPulse 1s ease-in-out infinite;
+  }
+  .midi-assign-btn.dup{ border-color:#ff6b7a; color:#ff6b7a; }
+  @keyframes learnPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
+
   .key{
     width:100%; height:150px; border-radius:12px; position:relative; cursor:pointer;
     background:linear-gradient(180deg, #262a34 0%, #14161c 88%, #0a0b0e 100%);
@@ -214,6 +229,10 @@
     display:none;
   }
   .key .badge.missing{ display:block; background:#511; color:#f77; }
+
+  /* ---------- Panel status MIDI ---------- */
+  .midi-device-list{ font-size:11px; color:var(--ink-dim); margin-top:6px; line-height:1.6; }
+  .midi-device-list .dev{ color:var(--k1); font-weight:700; }
 
   @media (min-width:900px){
     .keys-wrap{ flex-wrap:nowrap; gap:12px; }
@@ -277,6 +296,15 @@
         <h2>SAMPLE DEMUNG</h2>
         <div class="status" id="sampleStatus">Memuat sample dari folder sampler/ ...</div>
       </div>
+
+      <div class="panel">
+        <h2>MIDI CONTROLLER</h2>
+        <div class="controls">
+          <button id="resetMidiBtn">↺ Reset mapping MIDI</button>
+          <span class="status" id="midiStatus">Memeriksa dukungan Web MIDI ...</span>
+        </div>
+        <div class="midi-device-list" id="midiDeviceList"></div>
+      </div>
     </div>
 
     <div class="mid-col">
@@ -295,7 +323,7 @@
       </div>
 
       <div class="panel">
-        <h2>KALIBRASI TOMBOL</h2>
+        <h2>KALIBRASI TOMBOL KEYBOARD</h2>
         <div class="controls">
           <button id="resetMappingBtn">↺ Reset ke default</button>
           <span class="status" id="mappingStatus">Tersimpan untuk sesi ini (hilang jika tab/browser ditutup)</span>
@@ -306,6 +334,7 @@
 
   <div class="panel keybed-panel">
     <h2>TUTS DEMUNG</h2>
+    <div class="legend" style="margin-bottom:14px;">Klik tombol "MIDI: — (set)" lalu tekan tuts di MIDI controller untuk memetakan not. Klik dua kali (double-click) tombol MIDI untuk menghapus mapping.</div>
     <div class="keys-wrap" id="keysWrap"></div>
   </div>
 
@@ -481,14 +510,97 @@
     });
   }
 
+  // ---------- Kalibrasi MIDI: mapping dataKey -> nomor MIDI note ----------
+  const MIDI_MAPPING_SESSION_KEY = 'gamelan_midi_mapping';
+
+  function loadMidiMapping(){
+    try {
+      const raw = sessionStorage.getItem(MIDI_MAPPING_SESSION_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw);
+    } catch (e) {
+      return {};
+    }
+  }
+  function saveMidiMapping(){
+    sessionStorage.setItem(MIDI_MAPPING_SESSION_KEY, JSON.stringify(midiMapping));
+  }
+
+  let midiMapping = loadMidiMapping();
+  let midiReverseMap = {};
+  let learningKey = null;
+
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  function noteNumberToName(n){
+    const num = parseInt(n, 10);
+    if (isNaN(num)) return String(n);
+    const octave = Math.floor(num / 12) - 1;
+    const name = NOTE_NAMES[((num % 12) + 12) % 12];
+    return `${name}${octave}`;
+  }
+
+  function rebuildMidiReverseMap(){
+    midiReverseMap = {};
+    Object.entries(midiMapping).forEach(([dataKey, note]) => {
+      if (note !== undefined && note !== null && note !== '') midiReverseMap[String(note)] = dataKey;
+    });
+  }
+
+  function refreshMidiDupWarnings(){
+    const counts = {};
+    Object.values(midiMapping).forEach(n => {
+      if (n === undefined || n === null || n === '') return;
+      const key = String(n);
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    keyDefs.forEach(def => {
+      const btn = midiButtonEls[def.dataKey];
+      const n = midiMapping[def.dataKey];
+      const isDup = n !== undefined && n !== null && n !== '' && counts[String(n)] > 1;
+      btn.classList.toggle('dup', !!isDup);
+    });
+  }
+
+  function updateMidiButtonLabel(dataKey){
+    const btn = midiButtonEls[dataKey];
+    if (!btn) return;
+    if (learningKey === dataKey) {
+      btn.textContent = 'Tekan tuts MIDI…';
+      btn.classList.add('learning');
+      btn.classList.remove('assigned');
+    } else {
+      btn.classList.remove('learning');
+      const note = midiMapping[dataKey];
+      if (note !== undefined && note !== null && note !== '') {
+        btn.textContent = `MIDI: ${noteNumberToName(note)}`;
+        btn.classList.add('assigned');
+      } else {
+        btn.textContent = 'MIDI: — (set)';
+        btn.classList.remove('assigned');
+      }
+    }
+  }
+
+  function refreshAllMidiButtonLabels(){
+    keyDefs.forEach(def => updateMidiButtonLabel(def.dataKey));
+  }
+
   const keysWrap = document.getElementById('keysWrap');
   const keyEls = {};
   const badgeEls = {};
   const triggerInputEls = {};
+  const midiButtonEls = {};
 
   keyDefs.forEach(def => {
     const col = document.createElement('div');
     col.className = 'key-col';
+
+    const midiBtn = document.createElement('button');
+    midiBtn.type = 'button';
+    midiBtn.className = 'midi-assign-btn';
+    midiBtn.dataset.k = def.dataKey;
+    col.appendChild(midiBtn);
+    midiButtonEls[def.dataKey] = midiBtn;
 
     const input = document.createElement('input');
     input.className = 'trigger-input';
@@ -513,6 +625,9 @@
 
   rebuildReverseMap();
   refreshDupWarnings();
+  rebuildMidiReverseMap();
+  refreshAllMidiButtonLabels();
+  refreshMidiDupWarnings();
 
   Object.values(triggerInputEls).forEach(input => {
     input.addEventListener('input', () => {
@@ -534,6 +649,39 @@
       triggerInputEls[def.dataKey].value = mapping[def.dataKey];
     });
     refreshDupWarnings();
+  });
+
+  // ---------- Interaksi tombol assign MIDI (mode "Learn") ----------
+  Object.values(midiButtonEls).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dataKey = btn.dataset.k;
+      if (learningKey === dataKey) {
+        // klik lagi tombol yang sedang belajar -> batalkan
+        learningKey = null;
+      } else {
+        learningKey = dataKey;
+      }
+      refreshAllMidiButtonLabels();
+    });
+    btn.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const dataKey = btn.dataset.k;
+      delete midiMapping[dataKey];
+      saveMidiMapping();
+      rebuildMidiReverseMap();
+      if (learningKey === dataKey) learningKey = null;
+      refreshAllMidiButtonLabels();
+      refreshMidiDupWarnings();
+    });
+  });
+
+  document.getElementById('resetMidiBtn').addEventListener('click', () => {
+    midiMapping = {};
+    learningKey = null;
+    saveMidiMapping();
+    rebuildMidiReverseMap();
+    refreshAllMidiButtonLabels();
+    refreshMidiDupWarnings();
   });
 
   // ---------- Fill visual LED untuk semua slider ----------
@@ -676,15 +824,18 @@
     requestAnimationFrame(step);
   }
 
-  function playNote(dataKey){
+  // velocityScale (0-1) opsional, dipakai untuk trigger dari MIDI controller.
+  // Trigger dari keyboard/mouse tidak mengirim parameter ini -> otomatis 1 (volume penuh sesuai slider).
+  function playNote(dataKey, velocityScale){
     if (!keyEls[dataKey]) return;
     keyEls[dataKey].classList.add('active');
     const clip = getClip(dataKey);
     if (!clip) return;
+    const scale = (velocityScale === undefined || velocityScale === null) ? 1 : velocityScale;
     try {
       clip.pause();
       clip.currentTime = 0;
-      clip.volume = instVolume;
+      clip.volume = instVolume * scale;
       clip.play().catch(() => {});
     } catch(e) {}
 
@@ -722,6 +873,97 @@
     const dataKey = reverseMap[e.key.toLowerCase()];
     if (dataKey !== undefined) stopNote(dataKey);
   });
+
+  // ---------- MIDI controller (Web MIDI API) ----------
+  const midiStatusEl = document.getElementById('midiStatus');
+  const midiDeviceListEl = document.getElementById('midiDeviceList');
+  let midiAccess = null;
+  const attachedInputs = new Set();
+
+  function renderMidiDeviceList(){
+    if (!midiAccess) { midiDeviceListEl.innerHTML = ''; return; }
+    const inputs = Array.from(midiAccess.inputs.values());
+    if (inputs.length === 0) {
+      midiDeviceListEl.innerHTML = 'Belum ada MIDI controller terdeteksi. Colokkan device lalu pastikan izin browser diberikan.';
+      return;
+    }
+    midiDeviceListEl.innerHTML = 'Device terhubung:<br>' +
+      inputs.map(inp => `<span class="dev">● ${inp.name || 'MIDI Device'}</span>`).join('<br>');
+  }
+
+  function handleMidiMessage(event){
+    const data = event.data;
+    if (!data || data.length < 2) return;
+    const status = data[0];
+    const command = status & 0xf0;
+    const noteNum = data[1];
+    const velocity = data.length > 2 ? data[2] : 0;
+    const noteStr = String(noteNum);
+
+    const isNoteOn = command === 0x90 && velocity > 0;
+    const isNoteOff = command === 0x80 || (command === 0x90 && velocity === 0);
+
+    if (isNoteOn) {
+      if (learningKey !== null) {
+        midiMapping[learningKey] = noteStr;
+        saveMidiMapping();
+        rebuildMidiReverseMap();
+        const learned = learningKey;
+        learningKey = null;
+        refreshAllMidiButtonLabels();
+        refreshMidiDupWarnings();
+        return;
+      }
+      const dataKey = midiReverseMap[noteStr];
+      if (dataKey !== undefined) {
+        playNote(dataKey, velocity / 127);
+      }
+    } else if (isNoteOff) {
+      const dataKey = midiReverseMap[noteStr];
+      if (dataKey !== undefined) {
+        stopNote(dataKey);
+      }
+    }
+  }
+
+  function attachMidiInput(input){
+    if (attachedInputs.has(input.id)) return;
+    input.onmidimessage = handleMidiMessage;
+    attachedInputs.add(input.id);
+  }
+
+  function attachAllMidiInputs(){
+    if (!midiAccess) return;
+    midiAccess.inputs.forEach(attachMidiInput);
+    renderMidiDeviceList();
+  }
+
+  if (navigator.requestMIDIAccess) {
+    navigator.requestMIDIAccess({ sysex: false }).then((access) => {
+      midiAccess = access;
+      attachAllMidiInputs();
+      const count = Array.from(access.inputs.values()).length;
+      midiStatusEl.textContent = count > 0
+        ? `Web MIDI aktif — ${count} device terdeteksi.`
+        : 'Web MIDI aktif — colokkan MIDI controller.';
+      midiStatusEl.className = 'status ok';
+
+      access.onstatechange = () => {
+        attachAllMidiInputs();
+        const c = Array.from(access.inputs.values()).length;
+        midiStatusEl.textContent = c > 0
+          ? `Web MIDI aktif — ${c} device terdeteksi.`
+          : 'Web MIDI aktif — colokkan MIDI controller.';
+        midiStatusEl.className = 'status ok';
+      };
+    }).catch((err) => {
+      midiStatusEl.textContent = 'Izin akses MIDI ditolak/gagal: ' + (err && err.message ? err.message : err);
+      midiStatusEl.className = 'status err';
+    });
+  } else {
+    midiStatusEl.textContent = 'Browser ini tidak mendukung Web MIDI API. Gunakan Chrome/Edge/Opera, dan pastikan halaman diakses lewat http(s):// atau dari aplikasi Electron (bukan file:// langsung).';
+    midiStatusEl.className = 'status err';
+  }
 
   // ---------- Backing track + progress bar ----------
   const trackStatusEl = document.getElementById('trackStatus');
