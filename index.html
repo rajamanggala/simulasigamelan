@@ -80,7 +80,7 @@
     padding:14vh 12px 30vh;
     font-size:clamp(16px, min(3.8vw, 8vh), 80px);
   }
-  #notasiInner.kepatihan .n-not{ font-family:'Kepatihan','Consolas','Courier New',monospace; }
+  #notasiInner.kepatihan .n-not{ font-family:'Kepatihan','Consolas','Courier New',monospace; font-weight:400; font-synthesis:none; }
   .pesan-kosong{ font-size:16px; color:var(--ink-dim); text-align:center; line-height:1.6; padding:20px; }
 
   .n-baris{
@@ -305,9 +305,9 @@
   // ---------- Konfigurasi ----------
   const FOLDER_LAGU = 'backtrack/';
   const DAFTAR_LAGU = ['gugurgunung'];
-  const PAKAI_FONT_KEPATIHAN = false;
+  const PAKAI_FONT_KEPATIHAN = true;
   // Tabel terjemahan not -> karakter yang digambar. Isi jika font Kepatihan memakai kode khusus.
-  const GLYPH = { '.':'.', '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6', '7':'7' };
+  const GLYPH = { '.':'.', '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6', '7':'7', '_6':'y', '(1)':'g1', '(2)':'g2', '(3)':'g3', '(4)':'g4', '(5)':'g5', '(6)':'g6', '(7)':'g7', '(_6)':'gy' };
   function tampilNot(n){ return Object.prototype.hasOwnProperty.call(GLYPH, n) ? GLYPH[n] : n; }
 
   // ---------- Penyimpanan kecil (localStorage) ----------
