@@ -1,0 +1,13 @@
+{
+  "name": "simulasigamelan",
+  "version": "1.0.0",
+  "description": "Simulasi gamelan demung + backing track",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "kalibrasi": "electron . --kalibrasi"
+  },
+  "devDependencies": {
+    "electron": "^41.7.1"
+  }
+}

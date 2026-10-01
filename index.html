@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simulator Gamelan — Demung Pelog</title>
 <style>
+  @font-face{
+    font-family:'Kepatihan';
+    src:url('fonts/kepatihan.ttf') format('truetype');
+    font-display:swap;
+  }
   :root{
     --bg-deep:#07080b;
     --metal-hi:#2c303a; --metal-lo:#101218; --metal-rim:#454b5a;
@@ -15,23 +20,22 @@
   }
   *{ box-sizing:border-box; }
   html,body{
-    margin:0; min-height:100%;
+    margin:0; height:100%; overflow:hidden;
     background:
       repeating-linear-gradient(115deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 3px),
       radial-gradient(140% 100% at 50% -10%, #1b1e27 0%, var(--bg-deep) 60%);
     color:var(--ink); font-family:"Segoe UI", ui-sans-serif, system-ui, sans-serif;
-    display:flex; justify-content:center; user-select:none;
+    user-select:none;
   }
-  #app{ display:flex; flex-direction:column; gap:16px; padding:22px 14px 34px; width:100%; max-width:1480px; }
+  #app{
+    display:flex; flex-direction:column; gap:10px;
+    height:100vh; height:100dvh; padding:12px 16px;
+    max-width:1600px; margin:0 auto;
+  }
 
-  /* ---------- Brand plate ---------- */
-  .brand-plate{
-    display:flex; align-items:center; gap:12px; padding:14px 20px; border-radius:12px;
-    background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
-    border:1px solid var(--panel-edge);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), inset 0 -1px 0 rgba(0,0,0,.6), 0 10px 24px -12px #000;
-    position:relative;
-  }
+  /* ---------- Topbar ---------- */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:10px; }
   .brand-led{
     width:10px; height:10px; border-radius:50%; flex-shrink:0;
     background:radial-gradient(circle at 35% 30%, #baffcf, var(--k1) 55%, #0a5c39 100%);
@@ -39,454 +43,357 @@
     animation:blink 2.6s ease-in-out infinite;
   }
   @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
-  .brand-text h1{ margin:0; font-size:19px; font-weight:800; letter-spacing:.6px; }
-  .brand-sub{ font-size:11px; color:var(--brass); font-weight:700; letter-spacing:1.5px; margin-top:2px; }
+  .brand-title{ font-size:15px; font-weight:800; letter-spacing:.6px; }
+  .brand-sub{ font-size:10px; color:var(--brass); font-weight:700; letter-spacing:1.5px; margin-top:1px; }
+  .song-list{ display:flex; gap:8px; flex-wrap:wrap; }
+  .song-btn{
+    background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim);
+    color:var(--ink-dim); padding:8px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .song-btn:hover{ color:var(--ink); border-color:var(--k3); }
+  .song-btn.on{ color:#07080b; background:var(--k3); border-color:var(--k3); }
 
-  /* ---------- Panel dasar (rack module) ---------- */
+  /* ---------- Panel dasar ---------- */
   .panel{
     position:relative; width:100%;
     background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
-    border:1px solid var(--panel-edge); border-radius:12px; padding:16px 20px;
+    border:1px solid var(--panel-edge); border-radius:12px; padding:12px 18px;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.55), 0 10px 22px -12px #000;
   }
-  .panel h2{ margin:0 0 10px; font-size:12px; color:var(--ink-dim); font-weight:800; letter-spacing:1.2px; }
-  .screw{ position:absolute; width:7px; height:7px; border-radius:50%;
-    background:radial-gradient(circle at 35% 35%, #a8adb8, #1b1d24 72%);
-    box-shadow:0 1px 1px rgba(0,0,0,.85), inset 0 0 1px rgba(255,255,255,.35); }
-  .screw::after{ content:''; position:absolute; top:50%; left:12%; right:12%; height:1px;
-    background:rgba(0,0,0,.65); transform:rotate(35deg); }
-  .screw.tl{ top:7px; left:7px; } .screw.tr{ top:7px; right:7px; }
-  .screw.bl{ bottom:7px; left:7px; } .screw.br{ bottom:7px; right:7px; }
 
-  /* ---------- Pemilih lagu ---------- */
-  .song-select-row{ display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-  .song-select-row label{ font-size:12px; color:var(--ink-dim); font-weight:700; }
-  select{
-    background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink);
-    padding:8px 12px; border-radius:7px; font-size:13px; font-weight:700; cursor:pointer;
+  /* ---------- Panggung notasi ---------- */
+  .stage{ flex:1; min-height:0; display:flex; flex-direction:column; }
+  .stage-head{ display:flex; align-items:baseline; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+  .song-title{ font-size:20px; font-weight:800; }
+  .song-sub{ font-size:13px; font-style:italic; color:var(--ink-dim); }
+  .badge-uji{
+    display:none; font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 8px; border-radius:5px;
+    background:#4a3a15; color:#ffcf3f;
   }
-  select:focus{ outline:none; border-color:var(--k3); }
-  .dummy-badge{
-    font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 7px; border-radius:5px;
-    background:#4a3a15; color:#ffcf3f; display:none;
-  }
-  .dummy-badge.show{ display:inline-block; }
+  .badge-uji.show{ display:inline-block; }
 
-  /* ---------- Panel notasi ala layar LCD ---------- */
-  .notation-panel-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
-  .notation-header{ text-align:center; flex:1; }
-  .notation-header .title{ font-size:17px; font-weight:800; color:var(--ink); }
-  .notation-header .subtitle{ font-size:12px; font-style:italic; color:var(--ink-dim); margin-top:2px; }
-  .minimize-btn{
-    background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim); color:var(--ink-dim);
-    width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:15px; font-weight:800;
-    display:flex; align-items:center; justify-content:center; flex-shrink:0; line-height:1;
+  #notasi{
+    flex:1; min-height:0; position:relative; overflow:hidden; border-radius:8px;
+    background:#0c0e13; border:1px solid #23262f; box-shadow:inset 0 2px 8px rgba(0,0,0,.65);
   }
-  .minimize-btn:hover{ border-color:var(--k3); color:var(--ink); }
-  .notation-body{
-    overflow:hidden; max-height:400px;
-    transition:max-height 220ms ease, opacity 180ms ease, margin-top 220ms ease; opacity:1;
+  #notasiInner{
+    padding:14vh 12px 30vh;
+    font-size:clamp(16px, min(3.8vw, 8vh), 80px);
   }
-  .notation-body.collapsed{ max-height:0; opacity:0; margin-top:0; }
+  #notasiInner.kepatihan .n-not{ font-family:'Kepatihan','Consolas','Courier New',monospace; }
+  .pesan-kosong{ font-size:16px; color:var(--ink-dim); text-align:center; line-height:1.6; padding:20px; }
 
-  .legend{ font-size:11px; color:var(--ink-dim); text-align:center; margin-bottom:10px; line-height:1.5; }
-  .staff{
-    background:
-      linear-gradient(#1c2130 1px, transparent 1px) 0 0/100% 32px,
-      linear-gradient(90deg, #1c2130 1px, transparent 1px) 0 0/12.5% 100%,
-      #0c0e13;
-    border:1px solid #23262f; border-radius:6px; padding:6px 10px;
-    box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
+  .n-baris{
+    display:flex; align-items:center; justify-content:center; gap:1em;
+    padding:.12em 0; opacity:.7; transition:opacity 250ms ease;
   }
-  .staff-row{ display:flex; align-items:center; height:32px; font-family:"Consolas","Courier New",monospace;
-    font-weight:800; font-size:16px; color:var(--red); letter-spacing:1px; white-space:pre;
-    text-shadow:0 0 6px rgba(255,80,80,.35); }
-  .staff-row .bk-label{ color:var(--ink-dim); font-size:11px; font-weight:700; margin-right:8px; font-family:"Segoe UI", sans-serif; text-shadow:none; }
-
-  /* ---------- Grid tengah: kontrol suara/sample | backing track/kalibrasi ---------- */
-  .mid-grid{ display:grid; grid-template-columns:1fr; gap:16px; }
-  .mid-col{ display:flex; flex-direction:column; gap:16px; }
-  @media (min-width:900px){
-    .mid-grid{ grid-template-columns:1fr 1fr; }
+  .n-baris.kini{ opacity:1; }
+  .n-baris.lewat{ opacity:.25; }
+  .n-baris.putaran-baru{ margin-top:.5em; }
+  .n-gatra{ display:flex; gap:.1em; }
+  .n-not{
+    width:1.15em; text-align:center; line-height:1.4;
+    font-family:"Consolas","Courier New",monospace; font-weight:800;
+    color:var(--red); border-radius:.2em;
+    transition:background 80ms ease, color 80ms ease, text-shadow 80ms ease, transform 80ms ease;
+  }
+  .n-not.kosong{ color:var(--ink-dim); }
+  .n-not.aktif{
+    background:rgba(255,80,80,.4); color:#fff;
+    text-shadow:0 0 .5em var(--red); transform:scale(1.12);
   }
 
-  /* ---------- Kalibrasi tombol ---------- */
-  .controls{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  button{
+  /* ---------- Pemutar ---------- */
+  .transport{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 18px; }
+  .btn{
     background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim); color:var(--ink);
-    padding:9px 18px; border-radius:8px; font-weight:700; letter-spacing:.5px; cursor:pointer; font-size:13px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+    padding:10px 22px; border-radius:8px; font-size:15px; font-weight:800; cursor:pointer;
   }
-  button:hover{ border-color:var(--k3); }
-  button:disabled{ opacity:.5; cursor:default; }
-  .status{ font-size:12px; color:var(--ink-dim); white-space:pre-line; }
-  .status.ok{ color:var(--k1); }
-  .status.err{ color:#ff6b7a; }
-
-  /* ---------- Slider gaya LED metalik ---------- */
-  .volume-row{ display:flex; align-items:center; gap:12px; width:100%; }
-  .volume-row label{ font-size:12px; color:var(--ink-dim); min-width:110px; }
-  .volume-row .val{ font-size:11px; color:var(--ink-dim); min-width:34px; text-align:right; font-variant-numeric:tabular-nums; }
-
-  input[type="range"]{
-    -webkit-appearance:none; appearance:none; flex:1; height:8px; border-radius:999px;
-    background:#0c0d12; border:1px solid #000; cursor:pointer;
-    box-shadow:inset 0 2px 4px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.04);
-  }
-  input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none; width:16px; height:16px; border-radius:50%; margin-top:-1px;
-    background:radial-gradient(circle at 35% 30%, #e7ebf3, #9aa1b2 60%, #4a4f5c 100%);
-    border:1px solid #000; cursor:pointer; box-shadow:0 0 0 3px rgba(255,255,255,.05), 0 2px 4px rgba(0,0,0,.6);
-  }
-  input[type="range"]::-moz-range-track{ height:8px; border-radius:999px; background:#0c0d12; }
-  input[type="range"]::-moz-range-thumb{
-    width:16px; height:16px; border-radius:50%; border:1px solid #000;
-    background:radial-gradient(circle at 35% 30%, #e7ebf3, #9aa1b2 60%, #4a4f5c 100%);
-  }
-
-  .toggle-row{ display:flex; align-items:center; gap:10px; }
-  .toggle-row label{ font-size:12px; color:var(--ink-dim); }
-  .switch{
-    position:relative; width:46px; height:24px; border-radius:999px;
-    background:#12141a; border:1px solid var(--metal-rim); cursor:pointer; flex-shrink:0;
-    transition:background 120ms ease, border-color 120ms ease;
-    box-shadow:inset 0 2px 4px rgba(0,0,0,.7);
-  }
-  .switch .knob{
-    position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #cfd3dd, #6b7080); transition:left 120ms ease, background 120ms ease;
-  }
-  .switch.on{ background:color-mix(in srgb, var(--k1) 28%, #12141a); border-color:var(--k1); }
-  .switch.on .knob{ left:24px; background:radial-gradient(circle at 35% 30%, #baffcf, var(--k1)); box-shadow:0 0 6px var(--k1); }
-  .toggle-state{ font-size:11px; font-weight:700; letter-spacing:.3px; }
-  .toggle-state.on{ color:var(--k1); }
-  .toggle-state.off{ color:var(--ink-dim); }
-
-  /* ---------- Progress bar ---------- */
-  .player-row{ display:flex; align-items:center; gap:10px; width:100%; margin-top:12px; }
-  .time-label{ font-size:11px; color:var(--ink-dim); font-variant-numeric:tabular-nums; min-width:36px; }
+  .btn:hover:not(:disabled){ border-color:var(--k3); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.small{ padding:7px 12px; font-size:12px; }
+  .player-row{ display:flex; align-items:center; gap:10px; flex:1; min-width:200px; }
+  .time-label{ font-size:13px; color:var(--ink-dim); font-variant-numeric:tabular-nums; min-width:38px; }
   .time-label.end{ text-align:right; }
+  .status{ font-size:12px; color:var(--ink-dim); }
+  .status.ok{ color:var(--k1); }
+  .status.err{ color:var(--red); }
 
-  /* ---------- Kalibrasi tombol: input trigger + keybed ---------- */
-  .keybed-panel{ padding:20px 20px 22px; }
-  .keys-wrap{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-  .key-col{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1 1 80px; min-width:70px; max-width:180px; }
-  .trigger-input{
-    width:100%; text-align:center; background:var(--metal-lo); border:1px solid var(--metal-rim);
-    color:var(--ink); border-radius:6px; padding:5px 4px; font-size:12px; font-weight:700;
-    letter-spacing:.5px; text-transform:lowercase;
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; height:10px; border-radius:6px;
+    background:#0c0d12; outline:none; cursor:pointer; border:1px solid #23262f; width:100%;
   }
-  .trigger-input:focus{ outline:none; border-color:var(--k3); }
-  .trigger-input.dup{ border-color:#ff6b7a; color:#ff6b7a; }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #e8ecf5, #8a92a6); border:1px solid #000;
+    box-shadow:0 2px 4px rgba(0,0,0,.6);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%; background:#c4cadb; border:1px solid #000;
+  }
 
-  /* ---------- Tombol assign MIDI per not ---------- */
-  .midi-assign-btn{
-    width:100%; text-align:center; padding:5px 4px; font-size:10.5px; font-weight:700;
-    letter-spacing:.3px; border-radius:6px; background:var(--metal-lo); border:1px solid var(--metal-rim);
-    color:var(--ink-dim); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .midi-assign-btn:hover{ border-color:var(--brass); color:var(--ink); }
-  .midi-assign-btn.assigned{ color:var(--brass); border-color:color-mix(in srgb, var(--brass) 50%, var(--metal-rim)); }
-  .midi-assign-btn.learning{
-    color:#000; background:var(--brass); border-color:var(--brass);
-    animation:learnPulse 1s ease-in-out infinite;
-  }
-  .midi-assign-btn.dup{ border-color:#ff6b7a; color:#ff6b7a; }
-  @keyframes learnPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
-
+  /* ---------- Strip tuts ---------- */
+  .keystrip{ display:flex; gap:8px; }
   .key{
-    width:100%; height:150px; border-radius:12px; position:relative; cursor:pointer;
-    background:linear-gradient(180deg, #262a34 0%, #14161c 88%, #0a0b0e 100%);
-    border:1px solid #000; border-top:1px solid #3c4150;
-    display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:14px;
-    box-shadow:inset 0 2px 0 rgba(255,255,255,.05), inset 0 -6px 10px rgba(0,0,0,.55), 0 6px 12px -6px #000;
-    transition:transform 70ms ease, background 70ms ease, border-color 70ms ease, box-shadow 70ms ease;
+    flex:1; height:68px; border-radius:10px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+    border:1px solid var(--metal-rim); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 6px 12px -8px #000;
+    transition:background 60ms ease, box-shadow 60ms ease, color 60ms ease;
   }
-  .key.low{ border-style:dashed; }
-  .key .num{ font-size:26px; font-weight:800; color:var(--ink-dim); }
-  .key .num sub{ font-size:13px; }
-  .key .sol{ font-size:11px; color:var(--ink-dim); margin-top:4px; letter-spacing:.5px; }
+  .key .num{ font-size:24px; font-weight:800; line-height:1; }
+  .key.low .num::after{ content:'•'; display:block; font-size:12px; line-height:.5; text-align:center; }
+  .key .sol{ font-size:10px; color:var(--ink-dim); letter-spacing:1px; margin-top:4px; text-transform:uppercase; }
+  .key.active{ background:var(--c); color:#07080b; box-shadow:0 0 18px var(--c); border-color:var(--c); }
+  .key.active .sol{ color:#07080b; }
+  .key.missing{ outline:2px dashed var(--red); }
 
-  .key[data-k="0"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k0) 45%, #262a34), color-mix(in srgb, var(--k0) 20%, #14161c)); border-color:var(--k0); box-shadow:0 0 26px -4px var(--k0), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="0"].active .num, .key[data-k="0"].active .sol{ color:var(--k0); text-shadow:0 0 8px var(--k0); }
-  .key[data-k="1"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k1) 45%, #262a34), color-mix(in srgb, var(--k1) 20%, #14161c)); border-color:var(--k1); box-shadow:0 0 26px -4px var(--k1), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="1"].active .num, .key[data-k="1"].active .sol{ color:var(--k1); text-shadow:0 0 8px var(--k1); }
-  .key[data-k="2"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k2) 45%, #262a34), color-mix(in srgb, var(--k2) 20%, #14161c)); border-color:var(--k2); box-shadow:0 0 26px -4px var(--k2), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="2"].active .num, .key[data-k="2"].active .sol{ color:var(--k2); text-shadow:0 0 8px var(--k2); }
-  .key[data-k="3"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k3) 45%, #262a34), color-mix(in srgb, var(--k3) 20%, #14161c)); border-color:var(--k3); box-shadow:0 0 26px -4px var(--k3), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="3"].active .num, .key[data-k="3"].active .sol{ color:var(--k3); text-shadow:0 0 8px var(--k3); }
-  .key[data-k="4"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k4) 45%, #262a34), color-mix(in srgb, var(--k4) 20%, #14161c)); border-color:var(--k4); box-shadow:0 0 26px -4px var(--k4), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="4"].active .num, .key[data-k="4"].active .sol{ color:var(--k4); text-shadow:0 0 8px var(--k4); }
-  .key[data-k="5"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k5) 45%, #262a34), color-mix(in srgb, var(--k5) 20%, #14161c)); border-color:var(--k5); box-shadow:0 0 26px -4px var(--k5), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="5"].active .num, .key[data-k="5"].active .sol{ color:var(--k5); text-shadow:0 0 8px var(--k5); }
-  .key[data-k="6"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k6) 45%, #262a34), color-mix(in srgb, var(--k6) 20%, #14161c)); border-color:var(--k6); box-shadow:0 0 26px -4px var(--k6), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="6"].active .num, .key[data-k="6"].active .sol{ color:var(--k6); text-shadow:0 0 8px var(--k6); }
-  .key[data-k="7"].active{ background:linear-gradient(180deg, color-mix(in srgb, var(--k7) 45%, #262a34), color-mix(in srgb, var(--k7) 20%, #14161c)); border-color:var(--k7); box-shadow:0 0 26px -4px var(--k7), inset 0 2px 0 rgba(255,255,255,.15); }
-  .key[data-k="7"].active .num, .key[data-k="7"].active .sol{ color:var(--k7); text-shadow:0 0 8px var(--k7); }
-
-  .key .badge{
-    position:absolute; top:6px; right:6px; font-size:9px; font-weight:800; padding:2px 5px; border-radius:4px;
-    display:none;
+  /* ---------- Tombol admin & panel admin ---------- */
+  #adminBtn{
+    position:fixed; right:14px; bottom:14px; width:38px; height:38px; border-radius:50%;
+    background:#191b22; border:1px solid var(--metal-rim); color:var(--ink-dim);
+    font-size:18px; cursor:pointer; opacity:.35; z-index:20;
   }
-  .key .badge.missing{ display:block; background:#511; color:#f77; }
-
-  /* ---------- Panel status MIDI ---------- */
-  .midi-device-list{ font-size:11px; color:var(--ink-dim); margin-top:6px; line-height:1.6; }
-  .midi-device-list .dev{ color:var(--k1); font-weight:700; }
-
-  @media (min-width:900px){
-    .keys-wrap{ flex-wrap:nowrap; gap:12px; }
-    .key-col{ flex:1 1 0; max-width:none; }
-    .key{ height:210px; }
+  #adminBtn:hover{ opacity:1; }
+  #adminBackdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); opacity:0; pointer-events:none;
+    transition:opacity 200ms ease; z-index:30;
   }
+  #adminBackdrop.open{ opacity:1; pointer-events:auto; }
+  #admin{
+    position:fixed; top:0; right:0; height:100%; width:min(540px,100vw); z-index:40;
+    background:linear-gradient(180deg, #232731, #0e1015); border-left:1px solid var(--metal-rim);
+    padding:18px 20px 30px; overflow-y:auto; transform:translateX(100%); transition:transform 220ms ease;
+  }
+  #admin.open{ transform:translateX(0); }
+  .admin-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .admin-head h2{ margin:0; font-size:15px; letter-spacing:1.2px; }
+  .sec{ border-top:1px solid #2a2e39; padding:14px 0; }
+  .sec h3{ margin:0 0 10px; font-size:11px; color:var(--ink-dim); font-weight:800; letter-spacing:1.2px; }
+  .volume-row{ display:grid; grid-template-columns:130px 1fr 48px; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; }
+  .volume-row .val{ text-align:right; color:var(--ink-dim); font-size:12px; }
+  .toggle-row{ display:flex; align-items:center; gap:10px; font-size:13px; margin-top:6px; }
+  .switch{
+    width:46px; height:24px; border-radius:12px; background:#0c0d12; border:1px solid var(--metal-rim);
+    position:relative; cursor:pointer; flex-shrink:0;
+  }
+  .switch .knob{ position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#828aa0; transition:left 150ms ease, background 150ms ease; }
+  .switch.on .knob{ left:24px; background:var(--k1); }
+  .toggle-state{ font-size:11px; font-weight:800; color:var(--ink-dim); }
+  .toggle-state.on{ color:var(--k1); }
+  .num-input{
+    width:90px; background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink);
+    padding:6px 8px; border-radius:6px; font-size:13px; font-weight:700;
+  }
+  .midi-device-list{ font-size:12px; color:var(--ink-dim); margin-top:8px; line-height:1.6; }
+  .midi-device-list .dev{ color:var(--k1); }
+  .map-row{ display:grid; grid-template-columns:1fr 80px 1fr; gap:8px; align-items:center; margin-bottom:8px; font-size:13px; }
+  .map-label{ font-weight:700; }
+  .trigger-input{
+    width:100%; background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink);
+    padding:6px 8px; border-radius:6px; font-size:13px; font-weight:700; text-align:center; text-transform:none;
+  }
+  .trigger-input.dup, .midi-assign-btn.dup{ border-color:var(--red); }
+  .midi-assign-btn{
+    background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink-dim);
+    padding:6px 8px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .midi-assign-btn.assigned{ color:var(--k1); }
+  .midi-assign-btn.learning{ color:#ffcf3f; border-color:#ffcf3f; animation:blink 1s ease-in-out infinite; }
+  .hint{ font-size:11px; color:var(--ink-dim); line-height:1.5; margin:6px 0 10px; }
 </style>
 </head>
 <body>
-<div id="app">
 
-  <header class="brand-plate">
-    <div class="brand-led"></div>
-    <div class="brand-text">
-      <h1>SIMULATOR GAMELAN</h1>
-      <div class="brand-sub">DEMUNG · LARAS PELOG</div>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-led"></div>
+      <div>
+        <div class="brand-title">SIMULATOR GAMELAN</div>
+        <div class="brand-sub">DEMUNG · LARAS PELOG</div>
+      </div>
     </div>
+    <div class="song-list" id="daftarLagu"></div>
   </header>
 
-  <div class="panel">
-    <div class="song-select-row">
-      <label for="songSelect">Pilih lagu:</label>
-      <select id="songSelect"></select>
-      <span class="dummy-badge" id="dummyBadge">NOTASI DUMMY</span>
+  <section class="panel stage">
+    <div class="stage-head">
+      <div class="song-title" id="songTitle">—</div>
+      <div class="song-sub" id="songSubtitle"></div>
+      <span class="badge-uji" id="badgeUji">WAKTU UJI · BELUM TERKALIBRASI</span>
     </div>
-    <div class="notation-panel-header">
-      <div class="notation-header">
-        <div class="title" id="songTitle">—</div>
-        <div class="subtitle" id="songSubtitle">—</div>
-      </div>
-      <button class="minimize-btn" id="minimizeBtn" title="Sembunyikan/tampilkan notasi">−</button>
+    <div id="notasi"><div id="notasiInner"></div></div>
+  </section>
+
+  <section class="panel transport">
+    <button class="btn" id="playBtn" disabled>▶ Putar</button>
+    <button class="btn" id="stopBtn" disabled>■ Stop</button>
+    <div class="player-row">
+      <span class="time-label" id="timeElapsed">0:00</span>
+      <input type="range" id="progressSlider" min="0" max="100" value="0" step="0.1">
+      <span class="time-label end" id="timeTotal">0:00</span>
     </div>
-    <div class="notation-body" id="notationBody">
-      <div class="legend">) = Kenong &nbsp;&nbsp;&nbsp; ( ) = Gong</div>
-      <div class="staff" id="staff"></div>
-    </div>
-  </div>
+    <span class="status" id="trackStatus">Memuat ...</span>
+  </section>
 
-  <div class="mid-grid">
-    <div class="mid-col">
-      <div class="panel">
-        <h2>KONTROL SUARA</h2>
-        <div class="volume-row">
-          <label for="instVol">Volume Demung</label>
-          <input type="range" id="instVol" min="0" max="100" value="90">
-          <span class="val" id="instVolVal">90%</span>
-        </div>
-        <div class="volume-row" style="margin-top:10px;">
-          <label for="trackVol">Volume Backtrack</label>
-          <input type="range" id="trackVol" min="0" max="100" value="70">
-          <span class="val" id="trackVolVal">70%</span>
-        </div>
-        <div class="toggle-row" style="margin-top:14px;">
-          <div class="switch on" id="sustainSwitch"><div class="knob"></div></div>
-          <label>Sustain (tahan tombol untuk berdenging)</label>
-          <span class="toggle-state on" id="sustainState">ON</span>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2>SAMPLE DEMUNG</h2>
-        <div class="status" id="sampleStatus">Memuat sample dari folder sampler/ ...</div>
-      </div>
-
-      <div class="panel">
-        <h2>MIDI CONTROLLER</h2>
-        <div class="controls">
-          <button id="resetMidiBtn">↺ Reset mapping MIDI</button>
-          <span class="status" id="midiStatus">Memeriksa dukungan Web MIDI ...</span>
-        </div>
-        <div class="midi-device-list" id="midiDeviceList"></div>
-      </div>
-    </div>
-
-    <div class="mid-col">
-      <div class="panel">
-        <h2>BACKING TRACK</h2>
-        <div class="controls">
-          <button id="playBtn" disabled>▶ Putar</button>
-          <button id="stopBtn" disabled>■ Stop</button>
-          <span class="status" id="trackStatus">Memuat ...</span>
-        </div>
-        <div class="player-row">
-          <span class="time-label" id="timeElapsed">0:00</span>
-          <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" value="0" step="0.1">
-          <span class="time-label end" id="timeTotal">0:00</span>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2>KALIBRASI TOMBOL KEYBOARD</h2>
-        <div class="controls">
-          <button id="resetMappingBtn">↺ Reset ke default</button>
-          <span class="status" id="mappingStatus">Tersimpan untuk sesi ini (hilang jika tab/browser ditutup)</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel keybed-panel">
-    <h2>TUTS DEMUNG</h2>
-    <div class="legend" style="margin-bottom:14px;">Klik tombol "MIDI: — (set)" lalu tekan tuts di MIDI controller untuk memetakan not. Klik dua kali (double-click) tombol MIDI untuk menghapus mapping.</div>
-    <div class="keys-wrap" id="keysWrap"></div>
-  </div>
-
+  <section class="keystrip" id="keyStrip"></section>
 </div>
+
+<button id="adminBtn" title="Pengaturan">⚙</button>
+<div id="adminBackdrop"></div>
+
+<aside id="admin">
+  <div class="admin-head">
+    <h2>PENGATURAN</h2>
+    <button class="btn small" id="adminClose">Tutup ✕</button>
+  </div>
+
+  <div class="sec">
+    <h3>SUARA</h3>
+    <div class="volume-row">
+      <label for="instVol">Volume Demung</label>
+      <input type="range" id="instVol" min="0" max="100" value="90">
+      <span class="val" id="instVolVal">90%</span>
+    </div>
+    <div class="volume-row">
+      <label for="trackVol">Volume Backtrack</label>
+      <input type="range" id="trackVol" min="0" max="100" value="70">
+      <span class="val" id="trackVolVal">70%</span>
+    </div>
+    <div class="toggle-row">
+      <div class="switch on" id="sustainSwitch"><div class="knob"></div></div>
+      <span>Sustain (tahan tombol untuk berdenging)</span>
+      <span class="toggle-state on" id="sustainState">ON</span>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>SINKRONISASI NOTASI</h3>
+    <div class="toggle-row">
+      <label for="offsetGlobal">Tunda sorotan (ms)</label>
+      <input type="number" class="num-input" id="offsetGlobal" value="0" step="10">
+    </div>
+    <div class="hint">Isi angka positif jika sorotan terasa lebih cepat dari suara (misalnya karena speaker Bluetooth).</div>
+  </div>
+
+  <div class="sec">
+    <h3>SAMPLE DEMUNG</h3>
+    <div class="status" id="sampleStatus">Memuat sample dari folder sampler/ ...</div>
+  </div>
+
+  <div class="sec">
+    <h3>MIDI CONTROLLER</h3>
+    <button class="btn small" id="resetMidiBtn">↺ Reset mapping MIDI</button>
+    <div class="status" id="midiStatus" style="margin-top:8px;">Memeriksa dukungan Web MIDI ...</div>
+    <div class="midi-device-list" id="midiDeviceList"></div>
+  </div>
+
+  <div class="sec">
+    <h3>PEMETAAN TOMBOL</h3>
+    <div class="hint">Kolom tengah: tombol keyboard. Kolom kanan: klik lalu tekan tuts MIDI untuk memetakan; klik dua kali untuk menghapus.</div>
+    <div id="mapRows"></div>
+    <button class="btn small" id="resetMappingBtn">↺ Reset keyboard ke default</button>
+  </div>
+</aside>
 
 <script>
 (function(){
-  // ---------- Baut dekoratif di tiap panel ----------
-  document.querySelectorAll('.panel, .brand-plate').forEach(p => {
-    ['tl','tr','bl','br'].forEach(pos => {
-      const s = document.createElement('div');
-      s.className = 'screw ' + pos;
-      p.appendChild(s);
-    });
-  });
+  'use strict';
+  const $ = id => document.getElementById(id);
 
-  // ---------- Data lagu ----------
-  const songs = [
-    {
-      id: 'gugurgunung',
-      title: 'Lancaran "GUGUR GUNUNG"',
-      subtitle: 'laras Pelog Pathet',
-      file: 'gugurgunung.mp3',
-      dummy: false,
-      notationRows: [
-        { label: 'Bk', text: '.  3  2  3     .  6  .  5     .  7  .  6     .  3  (2)' },
-        { label: '',   text: '.  6  .  7)    .  6  .  7)    .  3  .  5)    .  7  (6)' },
-        { label: '',   text: '.  2  .  7)    .  2  .  7)    .  6  .  5)    .  7  (3)' },
-        { label: '',   text: '.  5  .  6)    .  5  .  6)    .  2  .  3)    .  6  (5)' },
-        { label: '',   text: '.  2  .  3)    .  2  .  3)    .  6  .  5)    .  6  (2)' }
-      ]
-    },
-    {
-      id: 'ladrangpendet',
-      title: 'Ladrang "PENDET"',
-      subtitle: 'laras Pelog Pathet — notasi placeholder, menunggu transkripsi asli',
-      file: 'ladrangpendet.mp3',
-      dummy: true,
-      notationRows: [
-        { label: 'Bk', text: '.  .  .  .     .  .  .  .     .  .  .  .     .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' },
-        { label: '',   text: '.  .  .  .)    .  .  .  .)    .  .  .  .)    .  .  .  (.)' }
-      ]
-    }
-  ];
-  let currentSongIndex = 0;
+  // ---------- Konfigurasi ----------
+  const FOLDER_LAGU = 'backtrack/';
+  const DAFTAR_LAGU = ['gugurgunung'];
+  const PAKAI_FONT_KEPATIHAN = false;
+  // Tabel terjemahan not -> karakter yang digambar. Isi jika font Kepatihan memakai kode khusus.
+  const GLYPH = { '.':'.', '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6', '7':'7' };
+  function tampilNot(n){ return Object.prototype.hasOwnProperty.call(GLYPH, n) ? GLYPH[n] : n; }
 
-  const songSelect = document.getElementById('songSelect');
-  const songTitleEl = document.getElementById('songTitle');
-  const songSubtitleEl = document.getElementById('songSubtitle');
-  const dummyBadge = document.getElementById('dummyBadge');
-  const staffEl = document.getElementById('staff');
-
-  songs.forEach((song, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = song.title.replace(/"/g, '');
-    songSelect.appendChild(opt);
-  });
-
-  function renderNotation(song){
-    songTitleEl.textContent = song.title;
-    songSubtitleEl.textContent = song.subtitle;
-    dummyBadge.classList.toggle('show', !!song.dummy);
-    staffEl.innerHTML = '';
-    song.notationRows.forEach(row => {
-      const div = document.createElement('div');
-      div.className = 'staff-row';
-      const label = document.createElement('span');
-      label.className = 'bk-label';
-      label.textContent = row.label || '';
-      label.style.width = '18px';
-      label.style.display = 'inline-block';
-      div.appendChild(label);
-      const text = document.createElement('span');
-      text.textContent = row.text;
-      div.appendChild(text);
-      staffEl.appendChild(div);
-    });
+  // ---------- Penyimpanan kecil (localStorage) ----------
+  function simpan(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+  function muat(k, def){
+    try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : def; }
+    catch(e){ return def; }
   }
 
-  function loadSong(index){
-    currentSongIndex = index;
-    const song = songs[index];
-    renderNotation(song);
-
-    backtrack.pause();
-    playBtn.disabled = true;
-    stopBtn.disabled = true;
-    progressSlider.value = 0;
-    updateSliderFill(progressSlider, 'var(--k3)');
-    timeElapsed.textContent = '0:00';
-    timeTotal.textContent = '0:00';
-    trackStatusEl.textContent = `Memuat ${song.file} ...`;
-    trackStatusEl.className = 'status';
-
-    backtrack.src = song.file;
-    backtrack.load();
+  // ---------- Slider fill ----------
+  function updateSliderFill(el, color){
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const val = parseFloat(el.value) || 0;
+    const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+    el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #0c0d12 ${pct}%, #0c0d12 100%)`;
   }
 
-  songSelect.addEventListener('change', () => {
-    loadSong(parseInt(songSelect.value));
-  });
-
-  // ---------- Minimize panel notasi ----------
-  const minimizeBtn = document.getElementById('minimizeBtn');
-  const notationBody = document.getElementById('notationBody');
-  let notationCollapsed = false;
-  minimizeBtn.addEventListener('click', () => {
-    notationCollapsed = !notationCollapsed;
-    notationBody.classList.toggle('collapsed', notationCollapsed);
-    minimizeBtn.textContent = notationCollapsed ? '+' : '−';
-  });
-
-  // ---------- Tombol demung: 0 (6 rendah) lalu 1–7 ----------
+  // ---------- Definisi tuts demung ----------
   const keyDefs = [
-    { dataKey: '0', fileKey: '6down', num: '6', sub: '',        sol: 'nem', low: true },
-    { dataKey: '1', fileKey: '1',     num: '1', sub: '',        sol: 'ji' },
-    { dataKey: '2', fileKey: '2',     num: '2', sub: '',        sol: 'ro' },
-    { dataKey: '3', fileKey: '3',     num: '3', sub: '',        sol: 'lu' },
-    { dataKey: '4', fileKey: '4',     num: '4', sub: '',        sol: 'pat' },
-    { dataKey: '5', fileKey: '5',     num: '5', sub: '',        sol: 'ma' },
-    { dataKey: '6', fileKey: '6',     num: '6', sub: '',        sol: 'nem' },
-    { dataKey: '7', fileKey: '7',     num: '7', sub: '',        sol: 'pi' }
+    { dataKey:'0', fileKey:'6down', num:'6', sol:'nem', low:true },
+    { dataKey:'1', fileKey:'1', num:'1', sol:'ji' },
+    { dataKey:'2', fileKey:'2', num:'2', sol:'ro' },
+    { dataKey:'3', fileKey:'3', num:'3', sol:'lu' },
+    { dataKey:'4', fileKey:'4', num:'4', sol:'pat' },
+    { dataKey:'5', fileKey:'5', num:'5', sol:'ma' },
+    { dataKey:'6', fileKey:'6', num:'6', sol:'nem' },
+    { dataKey:'7', fileKey:'7', num:'7', sol:'pi' }
   ];
 
-  // ---------- Kalibrasi tombol: mapping dataKey -> trigger keyboard ----------
-  const MAPPING_SESSION_KEY = 'gamelan_key_mapping';
+  // ---------- Pemetaan keyboard & MIDI ----------
+  const MAPPING_KEY = 'gamelan_key_mapping';
+  const MIDI_MAPPING_KEY = 'gamelan_midi_mapping';
   const defaultMapping = {};
-  keyDefs.forEach(def => { defaultMapping[def.dataKey] = def.dataKey; });
+  keyDefs.forEach(d => { defaultMapping[d.dataKey] = d.dataKey; });
 
-  function loadMapping(){
-    try {
-      const raw = sessionStorage.getItem(MAPPING_SESSION_KEY);
-      if (!raw) return { ...defaultMapping };
-      const parsed = JSON.parse(raw);
-      return { ...defaultMapping, ...parsed };
-    } catch (e) {
-      return { ...defaultMapping };
-    }
-  }
-  function saveMapping(){
-    sessionStorage.setItem(MAPPING_SESSION_KEY, JSON.stringify(mapping));
-  }
-
-  let mapping = loadMapping();
+  let mapping = { ...defaultMapping, ...muat(MAPPING_KEY, {}) };
   let reverseMap = {};
+  let midiMapping = muat(MIDI_MAPPING_KEY, {});
+  let midiReverseMap = {};
+  let learningKey = null;
+
+  const keyEls = {};
+  const triggerInputEls = {};
+  const midiButtonEls = {};
+
+  // ---------- Bangun strip tuts ----------
+  const keyStrip = $('keyStrip');
+  keyDefs.forEach((def, i) => {
+    const el = document.createElement('div');
+    el.className = 'key' + (def.low ? ' low' : '');
+    el.dataset.k = def.dataKey;
+    el.style.setProperty('--c', `var(--k${i})`);
+    el.innerHTML = `<div class="num">${def.num}</div><div class="sol">${def.sol}</div>`;
+    keyStrip.appendChild(el);
+    keyEls[def.dataKey] = el;
+  });
+
+  // ---------- Bangun tabel pemetaan di panel admin ----------
+  const mapRows = $('mapRows');
+  keyDefs.forEach(def => {
+    const row = document.createElement('div');
+    row.className = 'map-row';
+
+    const lab = document.createElement('div');
+    lab.className = 'map-label';
+    lab.textContent = `${def.num}${def.low ? ' (rendah)' : ''} · ${def.sol}`;
+    row.appendChild(lab);
+
+    const input = document.createElement('input');
+    input.className = 'trigger-input';
+    input.maxLength = 12;
+    input.value = mapping[def.dataKey] || '';
+    input.dataset.k = def.dataKey;
+    row.appendChild(input);
+    triggerInputEls[def.dataKey] = input;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'midi-assign-btn';
+    btn.dataset.k = def.dataKey;
+    row.appendChild(btn);
+    midiButtonEls[def.dataKey] = btn;
+
+    mapRows.appendChild(row);
+  });
 
   function rebuildReverseMap(){
     reverseMap = {};
@@ -494,73 +401,43 @@
       if (trigger) reverseMap[trigger.toLowerCase()] = dataKey;
     });
   }
-
   function refreshDupWarnings(){
     const counts = {};
     Object.values(mapping).forEach(t => {
       if (!t) return;
-      const key = t.toLowerCase();
-      counts[key] = (counts[key] || 0) + 1;
+      const k = t.toLowerCase();
+      counts[k] = (counts[k] || 0) + 1;
     });
     keyDefs.forEach(def => {
-      const input = triggerInputEls[def.dataKey];
       const t = (mapping[def.dataKey] || '').toLowerCase();
-      const isDup = t && counts[t] > 1;
-      input.classList.toggle('dup', isDup);
+      triggerInputEls[def.dataKey].classList.toggle('dup', !!t && counts[t] > 1);
     });
   }
-
-  // ---------- Kalibrasi MIDI: mapping dataKey -> nomor MIDI note ----------
-  const MIDI_MAPPING_SESSION_KEY = 'gamelan_midi_mapping';
-
-  function loadMidiMapping(){
-    try {
-      const raw = sessionStorage.getItem(MIDI_MAPPING_SESSION_KEY);
-      if (!raw) return {};
-      return JSON.parse(raw);
-    } catch (e) {
-      return {};
-    }
-  }
-  function saveMidiMapping(){
-    sessionStorage.setItem(MIDI_MAPPING_SESSION_KEY, JSON.stringify(midiMapping));
-  }
-
-  let midiMapping = loadMidiMapping();
-  let midiReverseMap = {};
-  let learningKey = null;
 
   const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   function noteNumberToName(n){
     const num = parseInt(n, 10);
     if (isNaN(num)) return String(n);
-    const octave = Math.floor(num / 12) - 1;
-    const name = NOTE_NAMES[((num % 12) + 12) % 12];
-    return `${name}${octave}`;
+    return `${NOTE_NAMES[((num % 12) + 12) % 12]}${Math.floor(num / 12) - 1}`;
   }
-
   function rebuildMidiReverseMap(){
     midiReverseMap = {};
     Object.entries(midiMapping).forEach(([dataKey, note]) => {
       if (note !== undefined && note !== null && note !== '') midiReverseMap[String(note)] = dataKey;
     });
   }
-
   function refreshMidiDupWarnings(){
     const counts = {};
     Object.values(midiMapping).forEach(n => {
       if (n === undefined || n === null || n === '') return;
-      const key = String(n);
-      counts[key] = (counts[key] || 0) + 1;
+      counts[String(n)] = (counts[String(n)] || 0) + 1;
     });
     keyDefs.forEach(def => {
-      const btn = midiButtonEls[def.dataKey];
       const n = midiMapping[def.dataKey];
-      const isDup = n !== undefined && n !== null && n !== '' && counts[String(n)] > 1;
-      btn.classList.toggle('dup', !!isDup);
+      const dup = n !== undefined && n !== null && n !== '' && counts[String(n)] > 1;
+      midiButtonEls[def.dataKey].classList.toggle('dup', !!dup);
     });
   }
-
   function updateMidiButtonLabel(dataKey){
     const btn = midiButtonEls[dataKey];
     if (!btn) return;
@@ -580,48 +457,7 @@
       }
     }
   }
-
-  function refreshAllMidiButtonLabels(){
-    keyDefs.forEach(def => updateMidiButtonLabel(def.dataKey));
-  }
-
-  const keysWrap = document.getElementById('keysWrap');
-  const keyEls = {};
-  const badgeEls = {};
-  const triggerInputEls = {};
-  const midiButtonEls = {};
-
-  keyDefs.forEach(def => {
-    const col = document.createElement('div');
-    col.className = 'key-col';
-
-    const midiBtn = document.createElement('button');
-    midiBtn.type = 'button';
-    midiBtn.className = 'midi-assign-btn';
-    midiBtn.dataset.k = def.dataKey;
-    col.appendChild(midiBtn);
-    midiButtonEls[def.dataKey] = midiBtn;
-
-    const input = document.createElement('input');
-    input.className = 'trigger-input';
-    input.maxLength = 12;
-    input.value = mapping[def.dataKey] || '';
-    input.dataset.k = def.dataKey;
-    col.appendChild(input);
-    triggerInputEls[def.dataKey] = input;
-
-    const el = document.createElement('div');
-    el.className = 'key' + (def.low ? ' low' : '');
-    el.dataset.k = def.dataKey;
-    el.dataset.file = def.fileKey;
-    const numHtml = def.sub ? `${def.num}<sub>${def.sub}</sub>` : def.num;
-    el.innerHTML = `<div class="badge" id="badge-${def.dataKey}">X</div><div class="num">${numHtml}</div><div class="sol">${def.sol}</div>`;
-    col.appendChild(el);
-
-    keysWrap.appendChild(col);
-    keyEls[def.dataKey] = el;
-    badgeEls[def.dataKey] = el.querySelector(`#badge-${def.dataKey}`);
-  });
+  function refreshAllMidiButtonLabels(){ keyDefs.forEach(d => updateMidiButtonLabel(d.dataKey)); }
 
   rebuildReverseMap();
   refreshDupWarnings();
@@ -631,117 +467,104 @@
 
   Object.values(triggerInputEls).forEach(input => {
     input.addEventListener('input', () => {
-      const dataKey = input.dataset.k;
-      mapping[dataKey] = input.value;
-      saveMapping();
+      mapping[input.dataset.k] = input.value;
+      simpan(MAPPING_KEY, mapping);
       rebuildReverseMap();
       refreshDupWarnings();
     });
-    input.addEventListener('keydown', (e) => e.stopPropagation());
-    input.addEventListener('keyup', (e) => e.stopPropagation());
+    input.addEventListener('keydown', e => e.stopPropagation());
+    input.addEventListener('keyup', e => e.stopPropagation());
   });
-
-  document.getElementById('resetMappingBtn').addEventListener('click', () => {
+  $('resetMappingBtn').addEventListener('click', () => {
     mapping = { ...defaultMapping };
-    saveMapping();
+    simpan(MAPPING_KEY, mapping);
     rebuildReverseMap();
-    Object.values(keyDefs).forEach(def => {
-      triggerInputEls[def.dataKey].value = mapping[def.dataKey];
-    });
+    keyDefs.forEach(def => { triggerInputEls[def.dataKey].value = mapping[def.dataKey]; });
     refreshDupWarnings();
   });
-
-  // ---------- Interaksi tombol assign MIDI (mode "Learn") ----------
   Object.values(midiButtonEls).forEach(btn => {
     btn.addEventListener('click', () => {
       const dataKey = btn.dataset.k;
-      if (learningKey === dataKey) {
-        // klik lagi tombol yang sedang belajar -> batalkan
-        learningKey = null;
-      } else {
-        learningKey = dataKey;
-      }
+      learningKey = (learningKey === dataKey) ? null : dataKey;
       refreshAllMidiButtonLabels();
     });
-    btn.addEventListener('dblclick', (e) => {
+    btn.addEventListener('dblclick', e => {
       e.stopPropagation();
       const dataKey = btn.dataset.k;
       delete midiMapping[dataKey];
-      saveMidiMapping();
+      simpan(MIDI_MAPPING_KEY, midiMapping);
       rebuildMidiReverseMap();
       if (learningKey === dataKey) learningKey = null;
       refreshAllMidiButtonLabels();
       refreshMidiDupWarnings();
     });
   });
-
-  document.getElementById('resetMidiBtn').addEventListener('click', () => {
+  $('resetMidiBtn').addEventListener('click', () => {
     midiMapping = {};
     learningKey = null;
-    saveMidiMapping();
+    simpan(MIDI_MAPPING_KEY, midiMapping);
     rebuildMidiReverseMap();
     refreshAllMidiButtonLabels();
     refreshMidiDupWarnings();
   });
 
-  // ---------- Fill visual LED untuk semua slider ----------
-  function updateSliderFill(el, color){
-    const min = parseFloat(el.min) || 0;
-    const max = parseFloat(el.max) || 100;
-    const val = parseFloat(el.value) || 0;
-    const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
-    el.style.background =
-      `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #0c0d12 ${pct}%, #0c0d12 100%)`;
-  }
+  // ---------- Panel admin ----------
+  const adminEl = $('admin');
+  const adminBackdrop = $('adminBackdrop');
+  function bukaAdmin(){ adminEl.classList.add('open'); adminBackdrop.classList.add('open'); }
+  function tutupAdmin(){ adminEl.classList.remove('open'); adminBackdrop.classList.remove('open'); }
+  $('adminBtn').addEventListener('click', bukaAdmin);
+  $('adminClose').addEventListener('click', tutupAdmin);
+  adminBackdrop.addEventListener('click', tutupAdmin);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') tutupAdmin(); });
 
-  // ---------- Kontrol volume ----------
-  const instVolSlider = document.getElementById('instVol');
-  const instVolVal = document.getElementById('instVolVal');
-  const trackVolSlider = document.getElementById('trackVol');
-  const trackVolVal = document.getElementById('trackVolVal');
-
+  // ---------- Volume ----------
+  const instVolSlider = $('instVol');
+  const trackVolSlider = $('trackVol');
   let instVolume = parseInt(instVolSlider.value) / 100;
   let trackVolume = parseInt(trackVolSlider.value) / 100;
-
   updateSliderFill(instVolSlider, 'var(--k1)');
   updateSliderFill(trackVolSlider, 'var(--k1)');
-
   instVolSlider.addEventListener('input', () => {
     instVolume = parseInt(instVolSlider.value) / 100;
-    instVolVal.textContent = instVolSlider.value + '%';
+    $('instVolVal').textContent = instVolSlider.value + '%';
     updateSliderFill(instVolSlider, 'var(--k1)');
   });
   trackVolSlider.addEventListener('input', () => {
     trackVolume = parseInt(trackVolSlider.value) / 100;
-    trackVolVal.textContent = trackVolSlider.value + '%';
+    $('trackVolVal').textContent = trackVolSlider.value + '%';
     backtrack.volume = trackVolume;
     updateSliderFill(trackVolSlider, 'var(--k1)');
   });
 
-  // ---------- Toggle sustain ----------
+  // ---------- Sustain ----------
   let sustainOn = true;
-
-  const sustainSwitch = document.getElementById('sustainSwitch');
-  const sustainState = document.getElementById('sustainState');
-  sustainSwitch.addEventListener('click', () => {
+  $('sustainSwitch').addEventListener('click', () => {
     sustainOn = !sustainOn;
-    sustainSwitch.classList.toggle('on', sustainOn);
-    sustainState.textContent = sustainOn ? 'ON' : 'OFF';
-    sustainState.classList.toggle('on', sustainOn);
-    sustainState.classList.toggle('off', !sustainOn);
+    $('sustainSwitch').classList.toggle('on', sustainOn);
+    const st = $('sustainState');
+    st.textContent = sustainOn ? 'ON' : 'OFF';
+    st.classList.toggle('on', sustainOn);
   });
 
-  // ---------- Load 2 set sample per tombol dari folder sampler/: [key].wav (sustain) & [key]short.wav (short) ----------
-  const POOL_SIZE = 6;
-  const poolsLong = {};
-  const poolsShort = {};
-  const poolIndexLong = {};
-  const poolIndexShort = {};
+  // ---------- Tunda sorotan ----------
+  const OFFSET_KEY = 'gamelan_offset_ms';
+  let offsetGlobalMs = Number(muat(OFFSET_KEY, 0)) || 0;
+  $('offsetGlobal').value = offsetGlobalMs;
+  $('offsetGlobal').addEventListener('input', () => {
+    offsetGlobalMs = Number($('offsetGlobal').value) || 0;
+    simpan(OFFSET_KEY, offsetGlobalMs);
+  });
+  $('offsetGlobal').addEventListener('keydown', e => e.stopPropagation());
+  $('offsetGlobal').addEventListener('keyup', e => e.stopPropagation());
 
+  // ---------- Sample demung: [key].wav (sustain) & [key]short.wav (short) ----------
+  const POOL_SIZE = 6;
+  const poolsLong = {}, poolsShort = {}, poolIndexLong = {}, poolIndexShort = {};
   let loadedCount = 0;
-  let failedList = [];
+  const failedList = [];
   const TOTAL_FILES = keyDefs.length * 2;
-  const sampleStatusEl = document.getElementById('sampleStatus');
+  const sampleStatusEl = $('sampleStatus');
 
   function updateSampleStatus(){
     const total = loadedCount + failedList.length;
@@ -758,8 +581,7 @@
       sampleStatusEl.className = 'status err';
     }
   }
-
-  function buildPool(dataKey, src, targetPoolsObj){
+  function buildPool(dataKey, src, target){
     const pool = [];
     let marked = false;
     for (let p = 0; p < POOL_SIZE; p++) {
@@ -769,43 +591,36 @@
       if (p === 0) {
         a.addEventListener('canplaythrough', () => {
           if (marked) return;
-          marked = true;
-          loadedCount++;
-          updateSampleStatus();
+          marked = true; loadedCount++; updateSampleStatus();
         }, { once: true });
         a.addEventListener('error', () => {
           if (marked) return;
-          marked = true;
-          failedList.push(src);
-          badgeEls[dataKey].classList.add('missing');
+          marked = true; failedList.push(src);
+          keyEls[dataKey].classList.add('missing');
           updateSampleStatus();
         });
       }
     }
-    targetPoolsObj[dataKey] = pool;
+    target[dataKey] = pool;
   }
-
   keyDefs.forEach(def => {
     buildPool(def.dataKey, `sampler/${def.fileKey}.wav`, poolsLong);
     buildPool(def.dataKey, `sampler/${def.fileKey}short.wav`, poolsShort);
     poolIndexLong[def.dataKey] = 0;
     poolIndexShort[def.dataKey] = 0;
   });
-
   function getClip(dataKey){
     if (sustainOn) {
       const pool = poolsLong[dataKey];
       poolIndexLong[dataKey] = (poolIndexLong[dataKey] + 1) % pool.length;
       return pool[poolIndexLong[dataKey]];
-    } else {
-      const pool = poolsShort[dataKey];
-      poolIndexShort[dataKey] = (poolIndexShort[dataKey] + 1) % pool.length;
-      return pool[poolIndexShort[dataKey]];
     }
+    const pool = poolsShort[dataKey];
+    poolIndexShort[dataKey] = (poolIndexShort[dataKey] + 1) % pool.length;
+    return pool[poolIndexShort[dataKey]];
   }
 
   const activeClip = {};
-
   function fadeAndStop(clip){
     const startVol = clip.volume;
     const startTime = performance.now();
@@ -813,19 +628,12 @@
     function step(now){
       const t = Math.min((now - startTime) / duration, 1);
       clip.volume = startVol * (1 - t);
-      if (t < 1) {
-        requestAnimationFrame(step);
-      } else {
-        clip.pause();
-        clip.currentTime = 0;
-        clip.volume = instVolume;
-      }
+      if (t < 1) requestAnimationFrame(step);
+      else { clip.pause(); clip.currentTime = 0; clip.volume = instVolume; }
     }
     requestAnimationFrame(step);
   }
-
-  // velocityScale (0-1) opsional, dipakai untuk trigger dari MIDI controller.
-  // Trigger dari keyboard/mouse tidak mengirim parameter ini -> otomatis 1 (volume penuh sesuai slider).
+  // velocityScale (0-1) opsional dari MIDI; keyboard/mouse otomatis 1.
   function playNote(dataKey, velocityScale){
     if (!keyEls[dataKey]) return;
     keyEls[dataKey].classList.add('active');
@@ -838,12 +646,8 @@
       clip.volume = instVolume * scale;
       clip.play().catch(() => {});
     } catch(e) {}
-
-    if (sustainOn) {
-      activeClip[dataKey] = clip;
-    }
+    if (sustainOn) activeClip[dataKey] = clip;
   }
-
   function stopNote(dataKey){
     if (!keyEls[dataKey]) return;
     keyEls[dataKey].classList.remove('active');
@@ -858,25 +662,24 @@
     el.addEventListener('mousedown', () => playNote(dataKey));
     el.addEventListener('mouseup', () => stopNote(dataKey));
     el.addEventListener('mouseleave', () => stopNote(dataKey));
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); playNote(dataKey); });
-    el.addEventListener('touchend', (e) => { e.preventDefault(); stopNote(dataKey); });
+    el.addEventListener('touchstart', e => { e.preventDefault(); playNote(dataKey); });
+    el.addEventListener('touchend', e => { e.preventDefault(); stopNote(dataKey); });
   });
-
-  window.addEventListener('keydown', (e) => {
+  window.addEventListener('keydown', e => {
     if (e.target && e.target.tagName === 'INPUT') return;
     if (e.repeat) return;
     const dataKey = reverseMap[e.key.toLowerCase()];
     if (dataKey !== undefined) playNote(dataKey);
   });
-  window.addEventListener('keyup', (e) => {
+  window.addEventListener('keyup', e => {
     if (e.target && e.target.tagName === 'INPUT') return;
     const dataKey = reverseMap[e.key.toLowerCase()];
     if (dataKey !== undefined) stopNote(dataKey);
   });
 
   // ---------- MIDI controller (Web MIDI API) ----------
-  const midiStatusEl = document.getElementById('midiStatus');
-  const midiDeviceListEl = document.getElementById('midiDeviceList');
+  const midiStatusEl = $('midiStatus');
+  const midiDeviceListEl = $('midiDeviceList');
   let midiAccess = null;
   const attachedInputs = new Set();
 
@@ -884,98 +687,83 @@
     if (!midiAccess) { midiDeviceListEl.innerHTML = ''; return; }
     const inputs = Array.from(midiAccess.inputs.values());
     if (inputs.length === 0) {
-      midiDeviceListEl.innerHTML = 'Belum ada MIDI controller terdeteksi. Colokkan device lalu pastikan izin browser diberikan.';
+      midiDeviceListEl.innerHTML = 'Belum ada MIDI controller terdeteksi.';
       return;
     }
     midiDeviceListEl.innerHTML = 'Device terhubung:<br>' +
       inputs.map(inp => `<span class="dev">● ${inp.name || 'MIDI Device'}</span>`).join('<br>');
   }
-
   function handleMidiMessage(event){
     const data = event.data;
     if (!data || data.length < 2) return;
-    const status = data[0];
-    const command = status & 0xf0;
-    const noteNum = data[1];
+    const command = data[0] & 0xf0;
+    const noteStr = String(data[1]);
     const velocity = data.length > 2 ? data[2] : 0;
-    const noteStr = String(noteNum);
-
     const isNoteOn = command === 0x90 && velocity > 0;
     const isNoteOff = command === 0x80 || (command === 0x90 && velocity === 0);
-
     if (isNoteOn) {
       if (learningKey !== null) {
         midiMapping[learningKey] = noteStr;
-        saveMidiMapping();
+        simpan(MIDI_MAPPING_KEY, midiMapping);
         rebuildMidiReverseMap();
-        const learned = learningKey;
         learningKey = null;
         refreshAllMidiButtonLabels();
         refreshMidiDupWarnings();
         return;
       }
       const dataKey = midiReverseMap[noteStr];
-      if (dataKey !== undefined) {
-        playNote(dataKey, velocity / 127);
-      }
+      if (dataKey !== undefined) playNote(dataKey, velocity / 127);
     } else if (isNoteOff) {
       const dataKey = midiReverseMap[noteStr];
-      if (dataKey !== undefined) {
-        stopNote(dataKey);
-      }
+      if (dataKey !== undefined) stopNote(dataKey);
     }
   }
-
   function attachMidiInput(input){
     if (attachedInputs.has(input.id)) return;
     input.onmidimessage = handleMidiMessage;
     attachedInputs.add(input.id);
   }
-
-  function attachAllMidiInputs(){
-    if (!midiAccess) return;
-    midiAccess.inputs.forEach(attachMidiInput);
-    renderMidiDeviceList();
+  function updateMidiStatus(){
+    const c = midiAccess ? Array.from(midiAccess.inputs.values()).length : 0;
+    midiStatusEl.textContent = c > 0
+      ? `Web MIDI aktif — ${c} device terdeteksi.`
+      : 'Web MIDI aktif — colokkan MIDI controller.';
+    midiStatusEl.className = 'status ok';
   }
-
   if (navigator.requestMIDIAccess) {
-    navigator.requestMIDIAccess({ sysex: false }).then((access) => {
+    navigator.requestMIDIAccess({ sysex:false }).then(access => {
       midiAccess = access;
-      attachAllMidiInputs();
-      const count = Array.from(access.inputs.values()).length;
-      midiStatusEl.textContent = count > 0
-        ? `Web MIDI aktif — ${count} device terdeteksi.`
-        : 'Web MIDI aktif — colokkan MIDI controller.';
-      midiStatusEl.className = 'status ok';
-
+      access.inputs.forEach(attachMidiInput);
+      renderMidiDeviceList();
+      updateMidiStatus();
       access.onstatechange = () => {
-        attachAllMidiInputs();
-        const c = Array.from(access.inputs.values()).length;
-        midiStatusEl.textContent = c > 0
-          ? `Web MIDI aktif — ${c} device terdeteksi.`
-          : 'Web MIDI aktif — colokkan MIDI controller.';
-        midiStatusEl.className = 'status ok';
+        access.inputs.forEach(attachMidiInput);
+        renderMidiDeviceList();
+        updateMidiStatus();
       };
-    }).catch((err) => {
+    }).catch(err => {
       midiStatusEl.textContent = 'Izin akses MIDI ditolak/gagal: ' + (err && err.message ? err.message : err);
       midiStatusEl.className = 'status err';
     });
   } else {
-    midiStatusEl.textContent = 'Browser ini tidak mendukung Web MIDI API. Gunakan Chrome/Edge/Opera, dan pastikan halaman diakses lewat http(s):// atau dari aplikasi Electron (bukan file:// langsung).';
+    midiStatusEl.textContent = 'Browser ini tidak mendukung Web MIDI API. Gunakan Chrome/Edge, dan buka lewat http://localhost/ atau Electron.';
     midiStatusEl.className = 'status err';
   }
 
-  // ---------- Backing track + progress bar ----------
-  const trackStatusEl = document.getElementById('trackStatus');
-  const playBtn = document.getElementById('playBtn');
-  const stopBtn = document.getElementById('stopBtn');
-  const progressSlider = document.getElementById('progressSlider');
-  const timeElapsed = document.getElementById('timeElapsed');
-  const timeTotal = document.getElementById('timeTotal');
+  // ---------- Elemen pemutar & notasi ----------
+  const trackStatusEl = $('trackStatus');
+  const playBtn = $('playBtn');
+  const stopBtn = $('stopBtn');
+  const progressSlider = $('progressSlider');
+  const timeElapsed = $('timeElapsed');
+  const timeTotal = $('timeTotal');
+  const notasiBox = $('notasi');
+  const notasiInner = $('notasiInner');
+  const daftarLaguEl = $('daftarLagu');
+
   const backtrack = new Audio();
   backtrack.preload = 'auto';
   backtrack.volume = trackVolume;
-
   updateSliderFill(progressSlider, 'var(--k3)');
 
   function formatTime(sec){
@@ -985,17 +773,214 @@
     return `${m}:${s}`;
   }
 
+  // ---------- Data lagu & mesin notasi ----------
+  const songs = [];          // { id, data }
+  let currentSongIndex = -1;
+  let gatraList = [];        // datar: { t, durasi, jumlah, barisIdx, noteEls }
+  let barisEls = [];
+  let akhirLagu = 0;
+  let aktifGatra = -1, aktifNot = -1, aktifBaris = -1;
+  let aktifSelesai = false;
+
+  function validasi(d){
+    if (!d || !Array.isArray(d.baris) || d.baris.length === 0) throw new Error('"baris" kosong atau hilang');
+    d.baris.forEach((b, i) => {
+      if (!Array.isArray(b.gatra) || b.gatra.length === 0) throw new Error(`baris ${i + 1}: "gatra" kosong`);
+      b.gatra.forEach((g, j) => {
+        if (typeof g.t !== 'number' || !Array.isArray(g.not) || g.not.length === 0)
+          throw new Error(`baris ${i + 1} gatra ${j + 1}: "t" atau "not" tidak valid`);
+      });
+    });
+  }
+
+  // Jika JSON punya "ulang": { jumlah, periode }, seluruh baris disalin ke bawah
+  // sebanyak "jumlah" kali, dengan waktu digeser tiap "periode" detik.
+  function ekspansi(d){
+    const u = d.ulang;
+    if (!u || !(u.jumlah > 1)) return { baris:d.baris, selesai:d.selesai };
+    const periode = Number(u.periode);
+    if (!(periode > 0)) throw new Error('"ulang.periode" harus angka lebih dari 0');
+    const baris = [];
+    for (let r = 0; r < u.jumlah; r++) {
+      d.baris.forEach((b, i) => {
+        baris.push({
+          ...b,
+          awalPutaran: i === 0 && r > 0,
+          gatra: b.gatra.map(g => ({ ...g, t: g.t + r * periode }))
+        });
+      });
+    }
+    const selesai = (typeof d.selesai === 'number') ? d.selesai + (u.jumlah - 1) * periode : undefined;
+    return { baris, selesai };
+  }
+
+  function bangunNotasi(d){
+    const x = ekspansi(d);
+    notasiInner.innerHTML = '';
+    notasiInner.classList.toggle('kepatihan', PAKAI_FONT_KEPATIHAN);
+    barisEls = [];
+    gatraList = [];
+    aktifGatra = -1; aktifNot = -1; aktifBaris = -1; aktifSelesai = false;
+
+    x.baris.forEach((b, bi) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'n-baris' + (b.awalPutaran ? ' putaran-baru' : '');
+      b.gatra.forEach(g => {
+        const gEl = document.createElement('div');
+        gEl.className = 'n-gatra';
+        const noteEls = g.not.map(n => {
+          const s = document.createElement('span');
+          s.className = 'n-not' + (n === '.' ? ' kosong' : '');
+          s.textContent = tampilNot(n);
+          gEl.appendChild(s);
+          return s;
+        });
+        rowEl.appendChild(gEl);
+        gatraList.push({ t:g.t, durasi:2, jumlah:g.not.length, barisIdx:bi, noteEls });
+      });
+      notasiInner.appendChild(rowEl);
+      barisEls.push(rowEl);
+    });
+
+    for (let i = 0; i < gatraList.length; i++) {
+      const cur = gatraList[i];
+      const next = gatraList[i + 1];
+      let akhir;
+      if (next) akhir = next.t;
+      else if (typeof x.selesai === 'number') akhir = x.selesai;
+      else akhir = cur.t + (i > 0 ? gatraList[i - 1].durasi : 2);
+      cur.durasi = Math.max(0.05, akhir - cur.t);
+    }
+    const last = gatraList[gatraList.length - 1];
+    akhirLagu = last.t + last.durasi;
+    notasiBox.scrollTop = 0;
+  }
+
+  function tundaDetik(){
+    const d = songs[currentSongIndex] ? songs[currentSongIndex].data : null;
+    return (((d && d.offsetMs) || 0) + offsetGlobalMs) / 1000;
+  }
+
+  function cariGatra(now){
+    let lo = 0, hi = gatraList.length - 1, ans = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (gatraList[mid].t <= now) { ans = mid; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    return ans;
+  }
+
+  function gulirKe(i){
+    const row = barisEls[i];
+    if (!row) return;
+    const top = row.offsetTop - (notasiBox.clientHeight - row.offsetHeight) / 2;
+    notasiBox.scrollTo({ top:Math.max(0, top), behavior:'smooth' });
+  }
+
+  function tampilkan(g, n, selesai){
+    if (g === aktifGatra && n === aktifNot && selesai === aktifSelesai) return;
+    if (aktifGatra >= 0 && gatraList[aktifGatra]) {
+      const old = gatraList[aktifGatra].noteEls[aktifNot];
+      if (old) old.classList.remove('aktif');
+    }
+    aktifGatra = g; aktifNot = n; aktifSelesai = selesai;
+
+    let baris = -1;
+    if (g >= 0) {
+      const G = gatraList[g];
+      const el = G.noteEls[n];
+      if (el) el.classList.add('aktif');
+      baris = G.barisIdx;
+    } else if (selesai) {
+      baris = barisEls.length;   // lagu selesai: semua baris sudah lewat
+    }
+
+    if (baris !== aktifBaris) {
+      aktifBaris = baris;
+      barisEls.forEach((el, i) => {
+        el.classList.toggle('lewat', baris >= 0 && i < baris);
+        el.classList.toggle('kini', i === baris);
+      });
+      if (baris >= 0 && baris < barisEls.length) gulirKe(baris);
+      else if (baris < 0) notasiBox.scrollTo({ top:0, behavior:'smooth' });
+      // baris === jumlah baris (selesai): posisi dibiarkan, tidak kembali ke atas
+    }
+  }
+
+  let isDraggingProgress = false;
+  function frame(){
+    requestAnimationFrame(frame);
+
+    if (!isDraggingProgress && isFinite(backtrack.duration) && backtrack.duration > 0) {
+      progressSlider.value = backtrack.currentTime;
+      timeElapsed.textContent = formatTime(backtrack.currentTime);
+      updateSliderFill(progressSlider, 'var(--k3)');
+    }
+
+    if (gatraList.length === 0) return;
+
+    // Belum diputar / habis di-Stop: tanpa sorotan, notasi di posisi awal
+    if (backtrack.paused && backtrack.currentTime === 0) {
+      tampilkan(-1, -1, false);
+      return;
+    }
+
+    const now = backtrack.currentTime - tundaDetik();
+    let g = cariGatra(now), n = -1, selesai = false;
+    if (g >= 0) {
+      if (now >= akhirLagu) { g = -1; selesai = true; }
+      else {
+        const G = gatraList[g];
+        n = Math.min(G.jumlah - 1, Math.max(0, Math.floor((now - G.t) / G.durasi * G.jumlah)));
+      }
+    }
+    tampilkan(g, n, selesai);
+  }
+
+  // ---------- Pilih & muat lagu ----------
+  function pilihLagu(index){
+    currentSongIndex = index;
+    const song = songs[index];
+    const d = song.data;
+
+    $('songTitle').textContent = d.judul || song.id;
+    $('songSubtitle').textContent = d.subjudul || '';
+    $('badgeUji').classList.toggle('show', !d.terkalibrasi);
+    Array.from(daftarLaguEl.children).forEach((b, i) => b.classList.toggle('on', i === index));
+
+    bangunNotasi(d);
+
+    backtrack.pause();
+    playBtn.disabled = true;
+    stopBtn.disabled = true;
+    progressSlider.value = 0;
+    updateSliderFill(progressSlider, 'var(--k3)');
+    timeElapsed.textContent = '0:00';
+    timeTotal.textContent = '0:00';
+
+    const file = d.audio || (song.id + '.mp3');
+    trackStatusEl.textContent = `Memuat ${file} ...`;
+    trackStatusEl.className = 'status';
+    backtrack.src = FOLDER_LAGU + file;
+    backtrack.load();
+  }
+
   backtrack.addEventListener('loadedmetadata', () => {
     progressSlider.max = backtrack.duration;
     timeTotal.textContent = formatTime(backtrack.duration);
   });
   backtrack.addEventListener('canplaythrough', () => {
-    trackStatusEl.textContent = songs[currentSongIndex].file + ' siap diputar';
+    const song = songs[currentSongIndex];
+    if (!song) return;
+    trackStatusEl.textContent = (song.data.audio || song.id + '.mp3') + ' siap diputar';
     trackStatusEl.className = 'status ok';
-    playBtn.disabled = false;
+    if (backtrack.paused) playBtn.disabled = false;
   });
   backtrack.addEventListener('error', () => {
-    trackStatusEl.textContent = `Gagal memuat ${songs[currentSongIndex].file} — pastikan file ada di folder yang sama dengan index.html`;
+    const song = songs[currentSongIndex];
+    const file = song ? (song.data.audio || song.id + '.mp3') : '';
+    trackStatusEl.textContent = `Gagal memuat ${FOLDER_LAGU}${file}`;
     trackStatusEl.className = 'status err';
   });
   backtrack.addEventListener('ended', () => {
@@ -1003,13 +988,6 @@
     stopBtn.disabled = true;
   });
 
-  let isDraggingProgress = false;
-  backtrack.addEventListener('timeupdate', () => {
-    if (isDraggingProgress) return;
-    progressSlider.value = backtrack.currentTime;
-    timeElapsed.textContent = formatTime(backtrack.currentTime);
-    updateSliderFill(progressSlider, 'var(--k3)');
-  });
   progressSlider.addEventListener('input', () => {
     isDraggingProgress = true;
     timeElapsed.textContent = formatTime(parseFloat(progressSlider.value));
@@ -1033,8 +1011,43 @@
     stopBtn.disabled = true;
   });
 
-  // ---------- Muat lagu pertama saat halaman dibuka ----------
-  loadSong(0);
+  // ---------- Muat daftar lagu dari backtrack/ ----------
+  async function muatDaftarLagu(){
+    const gagal = [];
+    for (const id of DAFTAR_LAGU) {
+      try {
+        const res = await fetch(`${FOLDER_LAGU}${id}.json`, { cache:'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        validasi(data);
+        songs.push({ id, data });
+      } catch (e) {
+        console.warn(`Gagal memuat ${id}.json:`, e);
+        gagal.push(`${id}.json (${e.message})`);
+      }
+    }
+
+    songs.forEach((s, i) => {
+      const b = document.createElement('button');
+      b.className = 'song-btn';
+      b.textContent = (s.data.judul || s.id).replace(/"/g, '');
+      b.addEventListener('click', () => pilihLagu(i));
+      daftarLaguEl.appendChild(b);
+    });
+
+    if (songs.length > 0) {
+      pilihLagu(0);
+    } else {
+      notasiInner.innerHTML = '<div class="pesan-kosong">Tidak ada lagu yang bisa dimuat.<br>' +
+        'Pastikan file ada di folder <b>backtrack/</b> dan halaman dibuka lewat <b>http://localhost/</b>.<br>' +
+        (gagal.length ? 'Detail: ' + gagal.join('; ') : '') + '</div>';
+      trackStatusEl.textContent = 'Lagu tidak ditemukan';
+      trackStatusEl.className = 'status err';
+    }
+  }
+
+  muatDaftarLagu();
+  requestAnimationFrame(frame);
 })();
 </script>
 </body>
