@@ -1,10 +1,14 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+
 const path = require('path');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
 
 // ---- Mode: "permainan" (biasa) atau "kalibrasi" (shortcut dengan --kalibrasi)
 const MODE = process.argv.includes('--kalibrasi') ? 'kalibrasi' : 'permainan';
+// ---- Kiosk: aktif di mode permainan, kecuali dijalankan dengan --jendela (untuk uji coba)
+const KIOSK = MODE === 'permainan' && !process.argv.includes('--jendela');
+let izinKeluar = false;   // jadi true hanya saat tombol Keluar di pengaturan ditekan
 
 // ---- Lokasi folder backtrack/
 // Saat dicoba (npm start): di folder proyek.
@@ -46,6 +50,12 @@ function bacaDaftarLagu() {
 
 ipcMain.handle('app:info', () => ({ mode: MODE, folderLagu: FOLDER_LAGU }));
 ipcMain.handle('lagu:daftar', () => bacaDaftarLagu());
+
+// ---- Keluar aplikasi (dipanggil dari tombol Keluar di panel pengaturan)
+ipcMain.handle('app:keluar', () => {
+  izinKeluar = true;   // buka kunci supaya jendela boleh ditutup
+  app.quit();
+});
 
 // ---- Aturan penyimpanan lagu ----
 // Simbol sah: titik, 1-7, 6 rendah (_6), dan versi bergong dengan kurung
@@ -190,18 +200,43 @@ function bukaJendela() {
     return;
   }
 
+  // Hilangkan menu bawaan (sekalian mematikan Ctrl+R, Ctrl+W, dll.)
+  if (KIOSK) Menu.setApplicationMenu(null);
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
     title: kalibrasi ? 'Gamelan Kalibrasi' : 'Gamelan Simulator',
+    kiosk: KIOSK,
+    fullscreen: KIOSK,
+    frame: !KIOSK,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false
     }
   });
+
+  if (KIOSK) {
+    // Alt+F4 / tombol close ditolak, kecuali sudah ada izin dari tombol Keluar
+    win.on('close', (e) => { if (!izinKeluar) e.preventDefault(); });
+
+    // Blokir pintasan yang bisa dipakai pengunjung usil
+    win.webContents.on('before-input-event', (event, input) => {
+      if (input.type !== 'keyDown') return;
+      const k = input.key.toLowerCase();
+      const ctrl = input.control || input.meta;
+      if (
+        k === 'f11' || k === 'f12' || k === 'f5' ||
+        (ctrl && ['r', 'w', 'q', 'p'].includes(k)) ||
+        (ctrl && input.shift && ['i', 'j', 'r'].includes(k))
+      ) event.preventDefault();
+    });
+    win.webContents.on('devtools-opened', () => win.webContents.closeDevTools());
+  }
+
   win.loadFile(halaman);
 }
-
 app.whenReady().then(bukaJendela);
 app.on('window-all-closed', () => app.quit());

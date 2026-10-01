@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('gamelan', {
   daftarLagu: () => ipcRenderer.invoke('lagu:daftar'),   // daftar lagu dari folder backtrack/
   pilihAudio: () => ipcRenderer.invoke('audio:pilih'),   // dialog mp3 -> {ok, nama, saranNama, url}
   simpanLagu: (p) => ipcRenderer.invoke('lagu:simpan', p), // {nama, data, timpa} -> {ok, id} / {ok:false, pesan}
-  bukaLagu:   (id) => ipcRenderer.invoke('lagu:buka', id)  // -> {ok, id, data, audioUrl}
+  bukaLagu:   (id) => ipcRenderer.invoke('lagu:buka', id),  // -> {ok, id, data, audioUrl}
+  keluar:     () => ipcRenderer.invoke('app:keluar')        // tutup aplikasi
 });
