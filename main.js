@@ -47,6 +47,77 @@ function bacaDaftarLagu() {
 ipcMain.handle('app:info', () => ({ mode: MODE, folderLagu: FOLDER_LAGU }));
 ipcMain.handle('lagu:daftar', () => bacaDaftarLagu());
 
+// ---- Aturan penyimpanan lagu ----
+// Simbol sah: titik, 1-7, 6 rendah (_6), dan versi bergong dengan kurung
+const NOT_SAH = /^(\.|[1-7]|_6|\((?:[1-7]|_6)\))$/;
+
+// Nama lagu: huruf kecil, angka, strip. Spasi jadi strip, karakter lain dibuang.
+function bersihkanNama(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-/, '')
+    .slice(0, 60)
+    .replace(/-$/, '');
+}
+
+// Mengembalikan teks galat, atau null bila lagu sah
+function periksaLagu(d) {
+  if (!d || typeof d !== 'object') return 'Data lagu kosong';
+  if (typeof d.judul !== 'string' || !d.judul.trim()) return 'Judul belum diisi';
+  if (!Array.isArray(d.baris) || d.baris.length === 0) return 'Notasi masih kosong';
+  let tTerakhir = -Infinity;
+  for (let i = 0; i < d.baris.length; i++) {
+    const b = d.baris[i];
+    if (!b || !Array.isArray(b.gatra) || b.gatra.length === 0) return 'Baris ' + (i + 1) + ': tidak ada gatra';
+    for (let j = 0; j < b.gatra.length; j++) {
+      const g = b.gatra[j];
+      const lokasi = 'Baris ' + (i + 1) + ', gatra ' + (j + 1);
+      if (!g || typeof g.t !== 'number' || !isFinite(g.t) || g.t < 0) return lokasi + ': waktu "t" tidak valid';
+      if (g.t < tTerakhir) return lokasi + ': waktu mundur (lebih kecil dari gatra sebelumnya)';
+      tTerakhir = g.t;
+      if (!Array.isArray(g.not) || g.not.length === 0) return lokasi + ': tidak ada not';
+      for (const n of g.not) {
+        if (typeof n !== 'string' || !NOT_SAH.test(n)) return lokasi + ': not tidak dikenal (' + n + ')';
+      }
+      if (g.waktu !== undefined) {
+        const bagus = Array.isArray(g.waktu) && g.waktu.length === g.not.length &&
+          g.waktu.every(w => typeof w === 'number' && isFinite(w));
+        if (!bagus) return lokasi + ': "waktu" harus angka dan jumlahnya sama dengan "not"';
+      }
+    }
+  }
+  return null;
+}
+
+// Tulis ke berkas sementara dulu, baru ganti nama (lagu lama tidak rusak bila mati di tengah)
+function tulisAman(tujuan, isi) {
+  const sementara = tujuan + '.tmp';
+  fs.writeFileSync(sementara, isi, 'utf8');
+  fs.renameSync(sementara, tujuan);
+}
+
+// Menerima { nama, data, timpa }. Lagu baru tidak boleh menimpa lagu yang sudah ada.
+ipcMain.handle('lagu:simpan', (event, p) => {
+  try {
+    const { nama, data, timpa } = p || {};
+    const id = bersihkanNama(nama);
+    if (!id) return { ok: false, pesan: 'Nama lagu tidak valid (pakai huruf, angka, strip)' };
+    const salah = periksaLagu(data);
+    if (salah) return { ok: false, pesan: salah };
+    fs.mkdirSync(FOLDER_LAGU, { recursive: true });
+    const fileJson = path.join(FOLDER_LAGU, id + '.json');
+    if (fs.existsSync(fileJson) && !timpa) return { ok: false, pesan: 'Lagu "' + id + '" sudah ada' };
+    const final = { ...data, id: id, audio: id + '.mp3' };
+    tulisAman(fileJson, JSON.stringify(final, null, 2));
+    return { ok: true, id: id };
+  } catch (e) {
+    return { ok: false, pesan: 'Gagal menyimpan: ' + e.message };
+  }
+});
+
 // ---- Jendela
 function bukaJendela() {
   const kalibrasi = MODE === 'kalibrasi';
