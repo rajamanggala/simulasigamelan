@@ -962,7 +962,7 @@
     const file = d.audio || (song.id + '.mp3');
     trackStatusEl.textContent = `Memuat ${file} ...`;
     trackStatusEl.className = 'status';
-    backtrack.src = FOLDER_LAGU + file;
+        backtrack.src = song.audioUrl || (FOLDER_LAGU + file);
     backtrack.load();
   }
 
@@ -1011,19 +1011,40 @@
     stopBtn.disabled = true;
   });
 
-  // ---------- Muat daftar lagu dari backtrack/ ----------
+    // ---------- Muat daftar lagu dari backtrack/ ----------
   async function muatDaftarLagu(){
     const gagal = [];
-    for (const id of DAFTAR_LAGU) {
+
+    if (window.gamelan && window.gamelan.daftarLagu) {
+      // Di aplikasi Electron: daftar dibaca otomatis dari folder backtrack/
       try {
-        const res = await fetch(`${FOLDER_LAGU}${id}.json`, { cache:'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        validasi(data);
-        songs.push({ id, data });
+        const daftar = await window.gamelan.daftarLagu();
+        for (const item of daftar) {
+          try {
+            validasi(item.data);
+            songs.push({ id: item.id, data: item.data, audioUrl: item.audioUrl });
+          } catch (e) {
+            console.warn(`Lagu ${item.id} dilewati:`, e);
+            gagal.push(`${item.id}.json (${e.message})`);
+          }
+        }
       } catch (e) {
-        console.warn(`Gagal memuat ${id}.json:`, e);
-        gagal.push(`${id}.json (${e.message})`);
+        console.warn('Gagal membaca daftar dari aplikasi:', e);
+        gagal.push('daftar (' + e.message + ')');
+      }
+    } else {
+      // Di browser (Vercel / localhost): pakai DAFTAR_LAGU
+      for (const id of DAFTAR_LAGU) {
+        try {
+          const res = await fetch(`${FOLDER_LAGU}${id}.json`, { cache:'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          validasi(data);
+          songs.push({ id, data });
+        } catch (e) {
+          console.warn(`Gagal memuat ${id}.json:`, e);
+          gagal.push(`${id}.json (${e.message})`);
+        }
       }
     }
 
@@ -1039,12 +1060,13 @@
       pilihLagu(0);
     } else {
       notasiInner.innerHTML = '<div class="pesan-kosong">Tidak ada lagu yang bisa dimuat.<br>' +
-        'Pastikan file ada di folder <b>backtrack/</b> dan halaman dibuka lewat <b>http://localhost/</b>.<br>' +
+        'Pastikan pasangan <b>nama.mp3</b> dan <b>nama.json</b> ada di folder <b>backtrack/</b>.<br>' +
         (gagal.length ? 'Detail: ' + gagal.join('; ') : '') + '</div>';
       trackStatusEl.textContent = 'Lagu tidak ditemukan';
       trackStatusEl.className = 'status err';
     }
   }
+  
 
   muatDaftarLagu();
   requestAnimationFrame(frame);
