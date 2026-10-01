@@ -49,7 +49,14 @@ ipcMain.handle('lagu:daftar', () => bacaDaftarLagu());
 
 // ---- Aturan penyimpanan lagu ----
 // Simbol sah: titik, 1-7, 6 rendah (_6), dan versi bergong dengan kurung
-const NOT_SAH = /^(\.|[1-7]|_6|\((?:[1-7]|_6)\))$/;
+// Karakter font Kepatihan yang lebarnya nol (pengubah: gong, titik, garis, dll.)
+const ZW = '*+-/89=>?AGSXZ\\abcgjklmnpsvxz|';
+// Satu not = 1-6 karakter font, minimal satu karakter dasar. Bentuk lama tetap diterima.
+function notSah(n) {
+  if (typeof n !== 'string') return false;
+  if (/^(\.|[1-7]|_6|\((?:[1-7]|_6)\))$/.test(n)) return true;
+  return /^[\x21-\x7e]{1,6}$/.test(n) && [...n].some(c => !ZW.includes(c));
+}
 
 // Nama lagu: huruf kecil, angka, strip. Spasi jadi strip, karakter lain dibuang.
 function bersihkanNama(s) {
@@ -80,7 +87,7 @@ function periksaLagu(d) {
       tTerakhir = g.t;
       if (!Array.isArray(g.not) || g.not.length === 0) return lokasi + ': tidak ada not';
       for (const n of g.not) {
-        if (typeof n !== 'string' || !NOT_SAH.test(n)) return lokasi + ': not tidak dikenal (' + n + ')';
+        if (!notSah(n)) return lokasi + ': not tidak dikenal (' + n + ')';
       }
       if (g.waktu !== undefined) {
         const bagus = Array.isArray(g.waktu) && g.waktu.length === g.not.length &&
@@ -99,7 +106,30 @@ function tulisAman(tujuan, isi) {
   fs.renameSync(sementara, tujuan);
 }
 
-// Menerima { nama, data, timpa }. Lagu baru tidak boleh menimpa lagu yang sudah ada.
+// ---- Memilih mp3 lewat dialog. Alamat file diingat di sini (bukan di halaman).
+let audioTerpilih = null;
+ipcMain.handle('audio:pilih', async (event) => {
+  const jendela = BrowserWindow.fromWebContents(event.sender);
+  const r = await dialog.showOpenDialog(jendela, {
+    title: 'Pilih file backing track (mp3)',
+    properties: ['openFile'],
+    filters: [{ name: 'MP3', extensions: ['mp3'] }]
+  });
+  if (r.canceled || !r.filePaths.length) return { ok: false, batal: true };
+  const alamat = r.filePaths[0];
+  if (!/\.mp3$/i.test(alamat)) return { ok: false, pesan: 'File harus berformat mp3' };
+  audioTerpilih = alamat;
+  const nama = path.basename(alamat);
+  return {
+    ok: true,
+    nama: nama,
+    saranNama: bersihkanNama(nama.replace(/\.mp3$/i, '')),
+    url: pathToFileURL(alamat).href
+  };
+});
+
+// ---- Menyimpan lagu. Menerima { nama, data, timpa }.
+// Lagu baru tidak boleh menimpa lagu yang sudah ada. mp3 pilihan dialog ikut disalin.
 ipcMain.handle('lagu:simpan', (event, p) => {
   try {
     const { nama, data, timpa } = p || {};
@@ -109,12 +139,43 @@ ipcMain.handle('lagu:simpan', (event, p) => {
     if (salah) return { ok: false, pesan: salah };
     fs.mkdirSync(FOLDER_LAGU, { recursive: true });
     const fileJson = path.join(FOLDER_LAGU, id + '.json');
-    if (fs.existsSync(fileJson) && !timpa) return { ok: false, pesan: 'Lagu "' + id + '" sudah ada' };
+    const fileMp3 = path.join(FOLDER_LAGU, id + '.mp3');
+    if ((fs.existsSync(fileJson) || fs.existsSync(fileMp3)) && !timpa) {
+      return { ok: false, pesan: 'Lagu "' + id + '" sudah ada' };
+    }
+    // Salin mp3 yang dipilih lewat dialog. Lagu tanpa mp3 tidak boleh disimpan.
+    if (audioTerpilih) {
+      if (path.resolve(audioTerpilih) !== path.resolve(fileMp3)) {
+        const sementaraMp3 = fileMp3 + '.tmp';
+        fs.copyFileSync(audioTerpilih, sementaraMp3);
+        fs.renameSync(sementaraMp3, fileMp3);
+      }
+    } else if (!fs.existsSync(fileMp3)) {
+      return { ok: false, pesan: 'Belum memilih file mp3' };
+    }
     const final = { ...data, id: id, audio: id + '.mp3' };
     tulisAman(fileJson, JSON.stringify(final, null, 2));
+    audioTerpilih = null;
     return { ok: true, id: id };
   } catch (e) {
     return { ok: false, pesan: 'Gagal menyimpan: ' + e.message };
+  }
+});
+
+// ---- Membuka lagu lama untuk diedit. Menerima id lagu.
+// Pilihan mp3 sebelumnya dilupakan, supaya tidak ikut tersalin ke lagu yang salah.
+ipcMain.handle('lagu:buka', (event, idMentah) => {
+  try {
+    audioTerpilih = null;
+    const id = bersihkanNama(idMentah);
+    const fileJson = path.join(FOLDER_LAGU, id + '.json');
+    const fileMp3 = path.join(FOLDER_LAGU, id + '.mp3');
+    if (!id || !fs.existsSync(fileJson)) return { ok: false, pesan: 'Lagu tidak ditemukan' };
+    if (!fs.existsSync(fileMp3)) return { ok: false, pesan: 'File mp3 lagu ini tidak ada' };
+    const data = JSON.parse(fs.readFileSync(fileJson, 'utf8'));
+    return { ok: true, id: id, data: data, audioUrl: pathToFileURL(fileMp3).href };
+  } catch (e) {
+    return { ok: false, pesan: 'Gagal membuka: ' + e.message };
   }
 });
 

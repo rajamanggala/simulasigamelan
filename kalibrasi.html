@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Gamelan Kalibrasi</title>
+<style>
+@font-face{font-family:'Kepatihan';src:url('fonts/kepatihan.ttf') format('truetype');}
+*{box-sizing:border-box}
+body{margin:0;background:#0c0e13;color:#e8eaf0;font-family:'Segoe UI',Arial,sans-serif;font-size:14px}
+#app{max-width:1300px;margin:0 auto;padding:14px}
+h1{font-size:18px;margin:0 0 10px}
+.kartu{background:#161922;border:1px solid #2a2e3a;border-radius:10px;padding:12px;margin-bottom:12px}
+.form{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#9aa0b0}
+input,select{background:#0c0e13;color:#e8eaf0;border:1px solid #2a2e3a;border-radius:6px;padding:6px 8px;font-family:inherit;font-size:14px}
+input[readonly]{opacity:.6}
+button{background:#2b6cb0;color:#fff;border:0;border-radius:6px;padding:7px 12px;font-family:inherit;font-size:14px;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.abu{background:#2a2e3a}
+button.ketuk{background:#c2410c}
+button.putar{background:#15803d}
+.mini{padding:4px 8px}
+#status{min-height:20px;font-weight:600}
+.ok{color:#4ade80}.gagal{color:#ff7a7a}
+#infoKetuk{font-size:12px;color:#f59e0b}
+
+/* Papan simbol: kecil, rapat, di atas, dua kelompok berdampingan */
+#pal{display:flex;flex-wrap:wrap;gap:4px 24px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #2a2e3a}
+.ket{font-size:11px;color:#8a90a0;margin:0 0 3px}
+.pr{display:flex;flex-wrap:nowrap;gap:4px;margin-bottom:4px}
+.pr button{position:relative;background:#222633;font-family:'Kepatihan';font-size:19px;width:40px;height:52px;line-height:52px;padding:0;overflow:hidden;color:#e05a5a;border-radius:5px}
+.pr button i{position:absolute;right:3px;bottom:2px;font:normal 9px 'Segoe UI',Arial,sans-serif;line-height:1;color:#7d8394}
+
+.rb{display:flex;align-items:center;gap:8px;margin-bottom:6px;border-radius:8px}
+.no{width:22px;text-align:right;color:#666c7c;font-size:12px}
+.pg{cursor:grab;user-select:none;color:#7d8394;font-size:18px;line-height:1;padding:8px 4px;border-radius:6px;letter-spacing:-3px}
+.pg:hover{background:#222633;color:#e8eaf0}
+.pg:active{cursor:grabbing}
+.diseret{opacity:.35}
+.tujuAtas{box-shadow:0 -5px 0 0 #4aa8ff}
+.tujuBawah{box-shadow:0 5px 0 0 #4aa8ff}
+.sel{display:flex;gap:4px;flex:1;padding:4px;min-height:92px;flex-wrap:wrap}
+.blok{position:relative;min-width:54px;padding:0 8px;height:88px;line-height:76px;text-align:center;font-family:'Kepatihan';font-size:28px;color:#e05a5a;border:1px solid #2a2e3a;border-radius:6px;cursor:pointer;overflow:hidden}
+.blok small{position:absolute;left:0;right:0;bottom:3px;font:11px/1 'Segoe UI',Arial,sans-serif;color:#7d8394}
+.kos{color:#6b7080}
+.slot{border-style:dashed}
+.slot::after{content:'+';font-family:'Segoe UI',Arial,sans-serif;font-size:18px;color:#555}
+.on{outline:2px solid #4aa8ff;background:#14243a}
+.nx{box-shadow:0 0 0 3px #f59e0b}
+.sudah{border-color:#3b6b4a}
+.main{background:#12351f;box-shadow:0 0 0 3px #4ade80}
+#tunda{font-family:'Kepatihan';font-size:26px;color:#e05a5a;margin-left:10px}
+.petunjuk{font-size:12px;color:#8a90a0;margin-top:8px;line-height:1.6}
+audio{height:34px}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Kalibrasi Gamelan</h1>
+  <div class="kartu">
+    <div class="form">
+      <button id="bPilih">Pilih MP3…</button><span id="namaMp3">belum dipilih</span>
+      <audio id="audio" controls></audio>
+    </div>
+    <div class="form" style="margin-top:10px">
+      <label>Judul<input id="fJudul" size="28"></label>
+      <label>Subjudul<input id="fSub" size="22"></label>
+      <label>Nama file<input id="fNama" size="18"></label>
+    </div>
+    <div class="form" style="margin-top:10px">
+      <button id="bKetuk" class="ketuk">▶ Mulai ketuk</button>
+      <button id="bTap" class="abu">Ketuk (Spasi)</button>
+      <label>Kecepatan KETUK <input id="kec" type="range" min="0.25" max="1" step="0.05" value="0.75" style="width:120px"> <b id="kecTeks">75%</b></label>
+      <button id="bHapusKetuk" class="abu">Hapus semua ketukan</button>
+      <button id="bPratinjau" class="putar">▶ Putar pratinjau</button>
+      <button id="bPratinjauSini" class="putar">▶ Pratinjau dari posisi ini</button>
+      <span id="infoKetuk"></span>
+    </div>
+  </div>
+  <div class="kartu">
+    <div id="pal"></div>
+    <div id="kisi"></div>
+    <button id="bBaris" class="abu">+ Baris</button><span id="info"></span><span id="tunda"></span>
+    <div class="petunjuk">
+      <b>1. Mengisi notasi:</b> ketik tombol keyboard sesuai font Kepatihan (huruf kecil di pojok kotak papan = tombol yang diketik): <b>1–7</b> = biasa, <b>q w e r t y u</b> = rendah, <b>Shift + angka</b> = tinggi, <b>.</b> = kosong. Pengubah (gong <b>g</b>, titik, garis) diketik <b>lebih dulu</b>, lalu angkanya. Esc membatalkan pengubah yang menunggu.<br>
+      <b>Mengedit kapan saja:</b> klik blok lalu ketik not baru = ganti not (waktunya tetap) · Delete = hapus blok (waktunya ikut hilang) · <b>Insert</b> = sisipkan blok baru di posisi kursor (belum punya waktu, harus diketuk) · panah = pindah · Enter = baris berikut · ✕ hapus baris. Maksimal 20 blok per baris. Saat mengetuk, tekan Esc dulu untuk mengedit.<br>
+      <b>Salin &amp; susun baris:</b> ⧉ menyalin baris ke tepat di bawahnya (salinan tanpa waktu). <b>⋮⋮ (pegangan di kiri nomor baris)</b> diseret ke atas/bawah untuk mengubah urutan; garis biru menunjukkan tempat jatuhnya. Baris yang dipindah dikosongkan waktunya dan harus diketuk ulang di posisi barunya.<br>
+      <b>2. Menyinkronkan:</b> pilih MP3, klik blok pertama yang mau diketuk (atau biarkan di slot kosong = mulai dari blok pertama yang belum diketuk), tekan <b>Mulai ketuk</b>, lalu <b>Spasi</b> tiap blok berbunyi. Backspace = batalkan ketukan terakhir · ←/→ atau klik blok = geser penunjuk oranye · Esc = selesai. Waktu tiap blok tampil di bawah kotaknya.<br>
+      <b>3. Pratinjau:</b> <b>Putar pratinjau</b> memutar lagu dari awal, blok yang sedang berbunyi menyala hijau dan kisi ikut menggulir. Klik blok = loncat ke sana (1 detik sebelumnya). Esc = berhenti. Bagian yang meleset bisa langsung diketuk ulang.
+    </div>
+  </div>
+  <div class="kartu">
+    <button id="bImpor" class="abu">Impor notasi…</button>
+    <div id="panelImpor" style="display:none;margin-top:8px">
+      <textarea id="txtImpor" rows="8" style="width:100%;font-family:'Kepatihan',monospace;font-size:18px;background:#14161d;color:#e6e8ee;border:1px solid #2a2e3a;border-radius:6px;padding:6px" placeholder="Tempel notasi di sini (dari Notepad atau blok sel Excel), atau buka file .txt. Satu baris = satu baris notasi, blok dipisah spasi/Tab."></textarea>
+      <div class="form" style="margin-top:6px">
+        <button id="bFileImpor" class="abu">Buka file .txt…</button>
+        <input type="file" id="fileImpor" accept=".txt,.tsv" hidden>
+        <button id="bTerapkan">Terapkan</button>
+        <button id="bTutupImpor" class="abu">Tutup</button>
+      </div>
+    </div>
+  </div>
+  <div class="kartu form">
+    <button id="bSimpan">Simpan</button><button id="bBaru" class="abu">Lagu baru</button>
+    <label>Buka lagu<select id="pilihLagu"></select></label><button id="bBuka" class="abu">Buka</button>
+  </div>
+  <div id="status"></div>
+</div>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id), G = window.gamelan, MAKS = 20;
+  // Karakter font yang lebarnya nol (pengubah). Harus sama dengan ZW di main.js
+  const ZW = '*+-/89=>?AGSXZ\\abcgjklmnpsvxz|';
+  // Susunan keyboard (urutan mengikuti gambar keyboard)
+  const PAPAN = [
+    ['Tanpa Shift', ['1234567890-=', 'qwertyuiop[]\\', "asdfghjkl;'", 'zxcvbnm,./']],
+    ['Dengan Shift', ['!@#$%^&*()_+', 'QWERTYUIOP{}|', 'ASDFGHJKL:"', 'ZXCVBNM<>?']]
+  ];
+  const NBSP = '\u00a0', r3 = x => Math.round(x * 1000) / 1000;
+  const adaDasar = n => [...n].some(ch => !ZW.includes(ch));
+  const tampil = n => adaDasar(n) ? n : n + NBSP;            // pengubah saja digambar di kotak kosong
+  const lama = n => /^\(.+\)$/.test(n) ? 'g' + lama(n.slice(1, -1)) : (n === '_6' ? 'y' : n); // bentuk lama -> font
+
+  // Tiap blok = { n: teks not, t: waktu detik atau null }
+  let baris = [[]], aktif = {r:0, c:0}, modeEdit = false, tunda = '';
+  let modeKetuk = false, kt = 0;                 // mengetuk waktu
+  let modePratinjau = false, sorot = -1;         // pratinjau sorotan
+  let datar = [], elBlok = [];                   // daftar datar semua blok + elemen DOM-nya
+  let dragR = -1;                                // baris yang sedang diseret (-1 = tidak ada)
+  const semua = () => { const a = []; baris.forEach((row, r) => row.forEach((b, c) => a.push({b, r, c}))); return a; };
+
+  function status(t, ok){ const e = $('status'); e.textContent = t; e.className = ok ? 'ok' : 'gagal'; }
+  function info(){
+    const all = semua(), n = all.length, s = all.filter(x => x.b.t !== null).length;
+    $('info').textContent = '  Total ' + n + ' blok · ' + s + ' sudah diketuk';
+    $('tunda').textContent = tunda ? tampil(tunda) : '';
+    $('bKetuk').textContent = modeKetuk ? '■ Selesai ketuk' : '▶ Mulai ketuk';
+    $('bPratinjau').textContent = modePratinjau ? '■ Stop pratinjau' : '▶ Putar pratinjau';
+    $('bPratinjauSini').textContent = modePratinjau ? '■ Stop pratinjau' : '▶ Pratinjau dari posisi ini';
+    $('infoKetuk').textContent = modeKetuk
+      ? 'Blok berikut: ' + Math.min(kt + 1, n) + ' dari ' + n + ' · Spasi = ketuk · Backspace = batalkan · ←/→ = geser · ↑/↓ = kecepatan (' + Math.round(($('audio').playbackRate || 1) * 100) + '%) · Esc = selesai'
+      : (modePratinjau ? 'Pratinjau berjalan · klik blok = loncat ke sana · Spasi = lanjut ketuk dari sini · Esc = berhenti' : '');
+  }
+  function blok(t, kls, fn){ const b = document.createElement('div'); b.className = 'blok' + kls; b.textContent = t; if (fn) b.onclick = fn; return b; }
+  function tombol(t, tip, fn){ const b = document.createElement('button'); b.className = 'abu mini'; b.textContent = t; b.title = tip; b.onclick = fn; return b; }
+  function pindah(r, c){ aktif = {r, c}; tunda = ''; render(); }
+
+  // ---- Seret baris untuk mengubah urutan
+  function bersihTujuan(){ document.querySelectorAll('.tujuAtas,.tujuBawah').forEach(x => x.classList.remove('tujuAtas', 'tujuBawah')); }
+  function pindahBaris(dari, sisip){
+    if (sisip > dari) sisip--;
+    if (sisip === dari) return;
+    const [row] = baris.splice(dari, 1);
+    baris.splice(sisip, 0, row);
+    row.forEach(b => { b.t = null; });           // baris yang dipindah: waktunya dikosongkan
+    aktif = {r:sisip, c:0}; tunda = ''; kt = 0;
+    status('Baris ' + (dari + 1) + ' dipindah ke posisi ' + (sisip + 1) + '. Waktunya dikosongkan, ketuk ulang di posisi barunya.', true);
+    render();
+  }
+
+  function render(){
+    const k = $('kisi'); k.innerHTML = ''; let gi = 0;
+    datar = semua(); elBlok = [];
+    baris.forEach((row, r) => {
+      const el = document.createElement('div'); el.className = 'rb';
+      el.innerHTML = '<span class="no">' + (r + 1) + '</span>';
+
+      const pg = document.createElement('span'); pg.className = 'pg'; pg.textContent = '⋮⋮';
+      pg.title = 'Seret untuk mengubah urutan baris'; pg.draggable = true;
+      pg.ondragstart = e => {
+        if (modeKetuk) { e.preventDefault(); status('Selesaikan mode ketuk dulu (Esc) sebelum memindah baris', false); return; }
+        dragR = r;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(r));
+        try { e.dataTransfer.setDragImage(el, 20, 20); } catch (x) {}
+        setTimeout(() => el.classList.add('diseret'), 0);
+      };
+      pg.ondragend = () => { dragR = -1; el.classList.remove('diseret'); bersihTujuan(); };
+      el.appendChild(pg);
+
+      el.ondragover = e => {
+        if (dragR < 0) return;
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        const rc = el.getBoundingClientRect(), bawah = e.clientY > rc.top + rc.height / 2;
+        bersihTujuan(); el.classList.add(bawah ? 'tujuBawah' : 'tujuAtas');
+      };
+      el.ondrop = e => {
+        if (dragR < 0) return;
+        e.preventDefault();
+        const rc = el.getBoundingClientRect(), bawah = e.clientY > rc.top + rc.height / 2, dari = dragR;
+        dragR = -1; bersihTujuan();
+        pindahBaris(dari, bawah ? r + 1 : r);
+      };
+
+      const sel = document.createElement('div'); sel.className = 'sel';
+      sel.onclick = () => pindah(r, row.length);
+      row.forEach((b, c) => {
+        const idx = gi++;
+        const kls = (b.n === '.' ? ' kos' : '') + (b.t !== null ? ' sudah' : '') +
+          (aktif.r === r && aktif.c === c ? ' on' : '') + (modeKetuk && idx === kt ? ' nx' : '') +
+          (modePratinjau && idx === sorot ? ' main' : '');
+        const d = blok(tampil(b.n), kls, e => {
+          e.stopPropagation();
+          if (modeKetuk) kt = idx;
+          if (modePratinjau && b.t !== null) {
+            const au = $('audio'); au.currentTime = Math.max(0, b.t - 1); if (au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); }
+          }
+          pindah(r, c);
+        });
+        if (b.t !== null) { const s = document.createElement('small'); s.textContent = b.t.toFixed(2); d.appendChild(s); }
+        elBlok[idx] = d;
+        sel.appendChild(d);
+      });
+      if (row.length < MAKS) sel.appendChild(blok('', ' slot' + (aktif.r === r && aktif.c === row.length ? ' on' : ''), null));
+      el.appendChild(sel);
+      el.appendChild(tombol('⧉', 'salin baris ke tepat di bawahnya (tanpa ketukan)', () => { baris.splice(r + 1, 0, row.map(b => ({n:b.n, t:null}))); render(); }));
+      el.appendChild(tombol('✕', 'hapus baris', () => {
+        if (baris.length > 1) { baris.splice(r, 1); pindah(Math.min(r, baris.length - 1), 0); }
+      }));
+      k.appendChild(el);
+    });
+    info();
+    if (modeKetuk) { const x = document.querySelector('.nx'); if (x) x.scrollIntoView({block:'center'}); }
+  }
+
+  // ch = satu karakter font. Pengubah (lebar nol) ditahan dulu sampai karakter dasar datang.
+  function pasang(ch){
+    if (ZW.includes(ch)) { tunda += ch; render(); return; }
+    const n = tunda + ch; tunda = '';
+    const row = baris[aktif.r];
+    if (aktif.c >= row.length) {
+      if (row.length >= MAKS) { status('Maksimal ' + MAKS + ' blok per baris', false); render(); return; }
+      row.push({n, t:null}); aktif.c = row.length;
+    } else { row[aktif.c].n = n; aktif.c++; }   // mengganti not: waktunya tetap
+    render();
+  }
+  function sisip(){
+    const row = baris[aktif.r];
+    if (row.length >= MAKS) { status('Baris sudah penuh (maksimal ' + MAKS + ' blok)', false); return; }
+    const c = Math.min(aktif.c, row.length);
+    row.splice(c, 0, {n:'.', t:null}); aktif.c = c; tunda = '';
+    status('Blok baru disisipkan (belum punya waktu). Ketik not-nya, lalu ketuk waktunya.', true);
+    render();
+  }
+
+  // ---- Mengetuk waktu
+  function mulaiKetuk(){
+    const au = $('audio');
+    if (!au.getAttribute('src')) { status('Pilih MP3 dulu', false); return; }
+    const all = semua();
+    if (!all.length) { status('Ketik notasi dulu', false); return; }
+    if (modePratinjau) { modePratinjau = false; setSorot(-1); }
+    const row = baris[aktif.r];
+    const i = aktif.c < row.length ? all.findIndex(x => x.r === aktif.r && x.c === aktif.c) : all.findIndex(x => x.b.t === null);
+    kt = i < 0 ? 0 : i; modeKetuk = true; tunda = '';
+    const v = parseFloat($('kec').value) || 1; au.defaultPlaybackRate = v; au.playbackRate = v;
+    // Melanjutkan: mundur 1 detik sebelum blok terakhir yang sudah diketuk (kalau ada)
+    const tSebelum = kt > 0 ? all[kt - 1].b.t : null;
+    if (tSebelum !== null) au.currentTime = Math.max(0, tSebelum - 1);
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    const p = au.play(); if (p && p.catch) p.catch(() => {});
+    status('Mengetuk: tekan Spasi tiap blok berbunyi', true); render();
+  }
+  function berhentiKetuk(){
+    modeKetuk = false; const au = $('audio'); au.pause(); au.defaultPlaybackRate = 1; au.playbackRate = 1; render();
+  }
+  // Atur kecepatan ketuk (slider + audio). Hanya mengubah audio bila sedang mengetuk.
+  function aturKec(v){
+    v = Math.min(1, Math.max(0.25, Math.round(v * 20) / 20));
+    $('kec').value = v; $('kecTeks').textContent = Math.round(v * 100) + '%';
+    if (modeKetuk) { const au = $('audio'); au.defaultPlaybackRate = v; au.playbackRate = v; render(); }
+  }
+  function ketuk(){
+    if (!modeKetuk) { status('Tekan "Mulai ketuk" dulu', false); return; }
+    const all = semua();
+    if (kt >= all.length) { berhentiKetuk(); return; }
+    all[kt].b.t = r3($('audio').currentTime); kt++;
+    if (kt >= all.length) { berhentiKetuk(); status('Semua blok sudah diketuk. Coba Putar pratinjau, lalu Simpan.', true); return; }
+    render();
+  }
+  function batalKetuk(){
+    const all = semua();
+    if (kt > 0) { kt--; all[kt].b.t = null; }
+    render();
+  }
+  function hapusKetukan(){
+    if (!confirm('Hapus semua ketukan waktu?')) return;
+    semua().forEach(x => x.b.t = null); kt = 0; render();
+  }
+
+  // ---- Pratinjau: sorotan mengikuti waktu lagu
+  function setSorot(i){
+    if (elBlok[sorot]) elBlok[sorot].classList.remove('main');
+    const barisLama = datar[sorot] ? datar[sorot].r : -1;
+    sorot = i;
+    if (i >= 0 && elBlok[i]) {
+      elBlok[i].classList.add('main');
+      if (datar[i].r !== barisLama) elBlok[i].scrollIntoView({block:'center', behavior:'smooth'});
+    }
+  }
+  function loopSorot(){
+    if (!modePratinjau) return;
+    const ct = $('audio').currentTime; let idx = -1;
+    for (let i = 0; i < datar.length; i++) { const t = datar[i].b.t; if (t !== null && t <= ct) idx = i; }
+    if (idx !== sorot) setSorot(idx);
+    requestAnimationFrame(loopSorot);
+  }
+  function mulaiPratinjau(dariSini){
+    const au = $('audio');
+    if (!au.getAttribute('src')) { status('Pilih MP3 dulu', false); return; }
+    if (!semua().some(x => x.b.t !== null)) { status('Belum ada blok yang diketuk', false); return; }
+    if (modeKetuk) { modeKetuk = false; }
+    modePratinjau = true; sorot = -1; tunda = '';
+    au.defaultPlaybackRate = 1; au.playbackRate = 1;
+    if (!dariSini || au.ended) au.currentTime = 0;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    const p = au.play(); if (p && p.catch) p.catch(() => {});
+    status('Pratinjau: perhatikan sorotan hijau. Klik blok untuk meloncat, Esc untuk berhenti.', true);
+    render(); requestAnimationFrame(loopSorot);
+  }
+  function stopPratinjau(){
+    modePratinjau = false; $('audio').pause(); setSorot(-1); render();
+  }
+
+  // capture = true supaya Spasi tidak sampai ke pemutar audio
+  document.addEventListener('keydown', e => {
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    if (modePratinjau && k === ' ') {
+      if (!e.repeat) {
+        if (sorot >= 0 && datar[sorot]) aktif = {r: datar[sorot].r, c: datar[sorot].c};
+        mulaiKetuk();
+      }
+      e.preventDefault(); e.stopPropagation(); return;
+    }
+    if (modeKetuk) {
+      let ok = true;
+      if (k === ' ') { if (!e.repeat) ketuk(); }
+      else if (k === 'Backspace') batalKetuk();
+      else if (k === 'ArrowLeft') { kt = Math.max(0, kt - 1); render(); }
+      else if (k === 'ArrowRight') { kt = Math.min(semua().length - 1, kt + 1); render(); }
+      else if (k === 'ArrowUp') aturKec(parseFloat($('kec').value) + 0.05);
+      else if (k === 'ArrowDown') aturKec(parseFloat($('kec').value) - 0.05);
+      else if (k === 'Escape') berhentiKetuk();
+      else ok = false;
+      if (ok) { e.preventDefault(); e.stopPropagation(); }
+      return;
+    }
+    const row = baris[aktif.r]; let ok = true;
+    const kode = k.length === 1 ? k.charCodeAt(0) : 0;
+    if (kode > 32 && kode < 127 && k !== '`') pasang(k);
+    else if (k === 'Escape') { if (tunda) { tunda = ''; render(); } else if (modePratinjau) stopPratinjau(); else ok = false; }
+    else if (k === 'Insert') sisip();
+    else if (k === 'Backspace' && tunda) { tunda = tunda.slice(0, -1); render(); }
+    else if (k === 'ArrowLeft') { tunda = ''; aktif.c = Math.max(0, aktif.c - 1); }
+    else if (k === 'ArrowRight') { tunda = ''; aktif.c = Math.min(row.length, aktif.c + 1); }
+    else if (k === 'ArrowUp' && aktif.r > 0) { tunda = ''; aktif.r--; aktif.c = Math.min(aktif.c, baris[aktif.r].length); }
+    else if (k === 'ArrowDown' && aktif.r < baris.length - 1) { tunda = ''; aktif.r++; aktif.c = Math.min(aktif.c, baris[aktif.r].length); }
+    else if (k === 'Backspace') { if (aktif.c > 0) { aktif.c--; row.splice(aktif.c, 1); } }
+    else if (k === 'Delete') { if (aktif.c < row.length) row.splice(aktif.c, 1); }
+    else if (k === 'Enter') { tunda = ''; if (aktif.r === baris.length - 1) baris.push([]); aktif.r++; aktif.c = baris[aktif.r].length; }
+    else ok = false;
+    if (ok) { e.preventDefault(); render(); }
+  }, true);
+  // klik tombol tidak memindahkan fokus, supaya Spasi/Enter/angka tetap masuk ke kisi
+  document.addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });
+  $('audio').addEventListener('ended', () => { if (modePratinjau) stopPratinjau(); });
+
+  // ---- Susun data JSON: waktu tiap blok dari ketukan, tiap 4 blok = 1 gatra (per baris)
+  function susunData(){
+    const all = semua(), belum = all.filter(x => x.b.t === null);
+    if (!all.length) return {salah:'Notasi masih kosong'};
+    if (belum.length) return {salah:'Masih ' + belum.length + ' blok belum diketuk (pertama: baris ' + (belum[0].r + 1) + ', blok ' + (belum[0].c + 1) + ')'};
+    for (let i = 1; i < all.length; i++) {
+      if (all[i].b.t < all[i - 1].b.t)
+        return {salah:'Waktu mundur di baris ' + (all[i].r + 1) + ', blok ' + (all[i].c + 1) + ' (lebih kecil dari blok sebelumnya). Ketuk ulang bagian itu.'};
+    }
+    const out = [];
+    baris.forEach(row => {
+      if (!row.length) return;
+      const gatra = [];
+      for (let s = 0; s < row.length; s += 4) {
+        const grup = row.slice(s, s + 4);
+        const waktu = grup.map(b => b.t);
+        gatra.push({t:waktu[0], waktu, not:grup.map(b => b.n)});
+      }
+      out.push({gatra});
+    });
+    const n = all.length, akhir = all[n - 1].b.t;
+    const jarak = n > 1 && akhir > all[n - 2].b.t ? akhir - all[n - 2].b.t : 0.5;
+    return {data:{versi:1, judul:$('fJudul').value.trim(), subjudul:$('fSub').value.trim(), laras:'pelog',
+      offsetMs:0, terkalibrasi:true, selesai:r3(akhir + jarak), baris:out}};
+  }
+
+  function kunciNama(id){ $('fNama').value = id; $('fNama').readOnly = true; }
+
+  async function pilihMp3(){
+    const r = await G.pilihAudio();
+    if (!r.ok) { if (!r.batal) status(r.pesan, false); return; }
+    $('namaMp3').textContent = r.nama; $('audio').src = r.url;
+    if (!modeEdit && !$('fNama').value) $('fNama').value = r.saranNama;
+    status('MP3 dipilih: ' + r.nama, true);
+  }
+  async function simpan(){
+    const h = susunData();
+    if (h.salah) { status(h.salah, false); return; }
+    const r = await G.simpanLagu({nama:$('fNama').value, data:h.data, timpa:modeEdit});
+    if (r.ok) { modeEdit = true; kunciNama(r.id); status('Tersimpan: ' + r.id, true); muatDaftar(); }
+    else status(r.pesan, false);
+  }
+  async function buka(id){
+    const r = await G.bukaLagu(id);
+    if (!r.ok) { status(r.pesan, false); return; }
+    const d = r.data, gs = d.baris.flatMap(b => b.gatra);
+    // waktu tiap not: pakai "waktu" bila ada, bila tidak bagi rata sampai gatra berikutnya
+    const wk = gs.map((g, j) => {
+      const k = g.not.length;
+      if (Array.isArray(g.waktu) && g.waktu.length === k) return g.waktu;
+      const nxt = gs[j + 1];
+      let dur = nxt && nxt.t > g.t ? (nxt.t - g.t) / k : (j > 0 ? (g.t - gs[j - 1].t) / gs[j - 1].not.length : 0.5);
+      if (!(dur > 0) || !isFinite(dur)) dur = 0.5;
+      return g.not.map((_, i) => g.t + i * dur);
+    });
+    let gi = 0;
+    baris = d.baris.map(b => b.gatra.flatMap(g => { const ws = wk[gi++]; return g.not.map((n, i) => ({n:lama(n), t:r3(ws[i])})); }));
+    if (!baris.length) baris = [[]];
+    $('fJudul').value = d.judul || ''; $('fSub').value = d.subjudul || '';
+    $('audio').src = r.audioUrl; $('namaMp3').textContent = r.id + '.mp3';
+    kunciNama(r.id); modeEdit = true; aktif = {r:0, c:0}; tunda = ''; modeKetuk = false; modePratinjau = false; sorot = -1; kt = 0; render();
+    if (d.ulang) status('Perhatian: lagu ini memakai "ulang"; hanya bagian pertama yang dimuat', false);
+    else status('Dibuka: ' + r.id, true);
+  }
+  async function baru(){
+    baris = [[]]; aktif = {r:0, c:0}; modeEdit = false; tunda = ''; modeKetuk = false; modePratinjau = false; sorot = -1; kt = 0;
+    ['fJudul', 'fSub', 'fNama'].forEach(i => $(i).value = '');
+    $('fNama').readOnly = false;
+    $('audio').pause(); $('audio').removeAttribute('src'); $('namaMp3').textContent = 'belum dipilih';
+    await G.bukaLagu(''); // sekadar melupakan mp3 yang sempat dipilih
+    render(); status('Lagu baru', true);
+  }
+  async function muatDaftar(){
+    const s = $('pilihLagu'); s.innerHTML = '<option value="">— pilih lagu —</option>';
+    try {
+      (await G.daftarLagu()).forEach(l => {
+        const o = document.createElement('option'); o.value = l.id; o.textContent = l.id + ' — ' + (l.data.judul || ''); s.appendChild(o);
+      });
+    } catch (e) {}
+  }
+
+  // ---- Papan simbol: dua kelompok berdampingan, satu tombol per tombol keyboard font
+  PAPAN.forEach(([nama, rows]) => {
+    const grup = document.createElement('div');
+    const t = document.createElement('div'); t.className = 'ket'; t.textContent = nama; grup.appendChild(t);
+    rows.forEach((rs, ri) => {
+      const d = document.createElement('div'); d.className = 'pr'; d.style.marginLeft = [0, 10, 16, 26][ri] + 'px';
+      [...rs].forEach(ch => {
+        const b = document.createElement('button');
+        b.textContent = tampil(ch); b.title = 'tombol: ' + ch + (ZW.includes(ch) ? ' (pengubah, ketik sebelum angka)' : '');
+        const lb = document.createElement('i'); lb.textContent = ch; b.appendChild(lb);
+        b.onclick = () => pasang(ch); d.appendChild(b);
+      });
+      grup.appendChild(d);
+    });
+    $('pal').appendChild(grup);
+  });
+
+  // ---- Impor notasi dari teks (Notepad / tempel dari Excel)
+  function urai(teks){
+    const hasil = [];
+    const lines = teks.replace(/^\uFEFF/, '').split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i];
+      if (!ln.trim()) continue;
+      const sel = ln.includes('\t')
+        ? ln.replace(/\s+$/, '').split('\t').map(x => x.trim() || '.')
+        : ln.trim().split(/\s+/);
+      if (sel.length > MAKS) return {salah: 'Baris teks ' + (i + 1) + ': ' + sel.length + ' blok (maksimal ' + MAKS + ')'};
+      const row = [];
+      for (let j = 0; j < sel.length; j++) {
+        const n = lama(sel[j]);
+        if (!/^[\x21-\x7e]{1,6}$/.test(n) || !adaDasar(n))
+          return {salah: 'Baris teks ' + (i + 1) + ', blok ' + (j + 1) + ': not tidak dikenal (' + sel[j] + ')'};
+        row.push(n);
+      }
+      hasil.push(row);
+    }
+    if (!hasil.length) return {salah: 'Teks kosong'};
+    return {hasil};
+  }
+  function terapkanImpor(){
+    const r = urai($('txtImpor').value);
+    if (r.salah) { status(r.salah, false); return; }
+    if (semua().length && !confirm('Notasi yang ada sekarang akan diganti (ketukan waktu ikut hilang). Lanjut?')) return;
+    if (modeKetuk) berhentiKetuk();
+    if (modePratinjau) stopPratinjau();
+    baris = r.hasil.map(row => row.map(n => ({n, t:null})));
+    const lr = baris.length - 1;
+    aktif = {r: lr, c: baris[lr].length}; tunda = ''; kt = 0; sorot = -1;
+    render();
+    status('Terimpor ' + baris.length + ' baris, ' + semua().length + ' blok. Sekarang ketuk waktunya.', true);
+    $('panelImpor').style.display = 'none';
+  }
+  $('bImpor').onclick = () => { const p = $('panelImpor'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; };
+  $('bTutupImpor').onclick = () => { $('panelImpor').style.display = 'none'; };
+  $('bFileImpor').onclick = () => $('fileImpor').click();
+  $('fileImpor').onchange = async () => {
+    const f = $('fileImpor').files[0];
+    if (f) $('txtImpor').value = await f.text();
+    $('fileImpor').value = '';
+  };
+  $('bTerapkan').onclick = terapkanImpor;
+
+  $('bPilih').onclick = pilihMp3; $('bSimpan').onclick = simpan; $('bBaru').onclick = baru;
+  $('bBuka').onclick = () => { const v = $('pilihLagu').value; if (v) buka(v); };
+  $('bBaris').onclick = () => { baris.push([]); pindah(baris.length - 1, 0); };
+  $('bKetuk').onclick = () => modeKetuk ? berhentiKetuk() : mulaiKetuk();
+  $('bTap').onclick = ketuk;
+  $('bHapusKetuk').onclick = hapusKetukan;
+  $('bPratinjau').onclick = () => modePratinjau ? stopPratinjau() : mulaiPratinjau(false);
+  $('bPratinjauSini').onclick = () => modePratinjau ? stopPratinjau() : mulaiPratinjau(true);
+  $('kec').oninput = () => aturKec(parseFloat($('kec').value) || 1);   // langsung berlaku saat mengetuk
+  $('kec').onchange = () => $('kec').blur();                            // supaya Spasi tidak diambil slider
+  render();
+  if (G) muatDaftar();
+  else {
+    status('Mode browser: kisi notasi bisa dicoba, tombol Pilih MP3 / Simpan / Buka hanya jalan di aplikasi Electron', false);
+    ['bPilih', 'bSimpan', 'bBuka', 'bBaru'].forEach(i => $(i).disabled = true);
+  }
+})();
+</script>
+</body>
+</html>

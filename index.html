@@ -11,19 +11,17 @@
     font-display:swap;
   }
   :root{
-    --bg-deep:#07080b;
-    --metal-hi:#2c303a; --metal-lo:#101218; --metal-rim:#454b5a;
-    --panel-edge:#040507;
-    --ink:#eef1f6; --ink-dim:#828aa0; --brass:#cda43a; --red:#ff5050;
+    --bg-deep:#f6f1e7;
+    --metal-hi:#ffffff; --metal-lo:#efe8d8; --metal-rim:#cfc4aa;
+    --panel-edge:#d8cfba;
+    --ink:#1f2430; --ink-dim:#4f566a; --brass:#8a6a10; --red:#b3261e; --ok:#1b7a4b;
     --k0:#2fe6e6; --k1:#3ef0a8; --k2:#3fd0e6; --k3:#3fa9ff;
     --k4:#8f9bff; --k5:#c98cff; --k6:#ff86d6; --k7:#ff9a4a;
   }
   *{ box-sizing:border-box; }
   html,body{
     margin:0; height:100%; overflow:hidden;
-    background:
-      repeating-linear-gradient(115deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 3px),
-      radial-gradient(140% 100% at 50% -10%, #1b1e27 0%, var(--bg-deep) 60%);
+    background:var(--bg-deep);
     color:var(--ink); font-family:"Segoe UI", ui-sans-serif, system-ui, sans-serif;
     user-select:none;
   }
@@ -43,14 +41,30 @@
     animation:blink 2.6s ease-in-out infinite;
   }
   @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
-  .brand-title{ font-size:15px; font-weight:800; letter-spacing:.6px; }
-  .brand-sub{ font-size:10px; color:var(--brass); font-weight:700; letter-spacing:1.5px; margin-top:1px; }
-  .song-list{ display:flex; gap:8px; flex-wrap:wrap; }
-  .song-btn{
-    background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim);
-    color:var(--ink-dim); padding:8px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;
+  .brand-title{ font-size:16px; font-weight:800; letter-spacing:.6px; }
+  .brand-sub{ font-size:11px; color:var(--brass); font-weight:700; letter-spacing:1.5px; margin-top:1px; }
+
+  /* ---------- Playlist ---------- */
+  .playlist-wrap{ position:relative; }
+  .playlist-pop{
+    display:none; position:absolute; right:0; top:calc(100% + 8px); z-index:50;
+    width:min(460px, 92vw); max-height:65vh; flex-direction:column; gap:8px; padding:10px;
+    background:#fffdf8; border:1px solid #cfc4aa; border-radius:12px;
+    box-shadow:0 14px 34px rgba(60,45,10,.3);
   }
-  .song-btn:hover{ color:var(--ink); border-color:var(--k3); }
+  .playlist-pop.show{ display:flex; }
+  .playlist-pop input{
+    background:#fff; color:var(--ink); border:1px solid #cfc4aa; border-radius:8px;
+    padding:10px 12px; font-size:16px; font-family:inherit;
+  }
+  .song-list{ display:flex; flex-direction:column; gap:4px; overflow-y:auto; min-height:0; }
+  .song-btn{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:linear-gradient(180deg,#ffffff,#efe8d8); border:1px solid var(--metal-rim);
+    color:var(--ink); padding:12px 14px; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .song-no{ min-width:2em; text-align:right; opacity:.6; font-weight:600; }
+  .song-btn:hover{ border-color:var(--k3); }
   .song-btn.on{ color:#07080b; background:var(--k3); border-color:var(--k3); }
 
   /* ---------- Panel dasar ---------- */
@@ -58,93 +72,94 @@
     position:relative; width:100%;
     background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
     border:1px solid var(--panel-edge); border-radius:12px; padding:12px 18px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.55), 0 10px 22px -12px #000;
+    box-shadow:0 2px 8px -2px rgba(90,70,20,.25);
   }
 
   /* ---------- Panggung notasi ---------- */
   .stage{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .stage-head{ display:flex; align-items:baseline; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
-  .song-title{ font-size:20px; font-weight:800; }
-  .song-sub{ font-size:13px; font-style:italic; color:var(--ink-dim); }
+  .song-title{ font-size:22px; font-weight:800; }
+  .song-sub{ font-size:14px; font-style:italic; color:var(--ink-dim); }
   .badge-uji{
-    display:none; font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 8px; border-radius:5px;
-    background:#4a3a15; color:#ffcf3f;
+    display:none; font-size:11px; font-weight:800; letter-spacing:.5px; padding:2px 8px; border-radius:5px;
+    background:#fff1c2; color:#7a5a00;
   }
   .badge-uji.show{ display:inline-block; }
+  .bantu{ text-align:center; font-size:16px; font-weight:600; color:var(--ink-dim); margin-bottom:6px; }
 
   #notasi{
     flex:1; min-height:0; position:relative; overflow:hidden; border-radius:8px;
-    background:#0c0e13; border:1px solid #23262f; box-shadow:inset 0 2px 8px rgba(0,0,0,.65);
+    background:#fffdf8; border:1px solid #d8cfba; box-shadow:inset 0 1px 4px rgba(90,70,20,.12);
   }
   #notasiInner{
     padding:14vh 12px 30vh;
-    font-size:clamp(16px, min(4cqw, 8vh), 80px);
+    font-size:clamp(16px, min(5.8cqw, 10vh), 120px);
   }
   #notasiInner.kepatihan .n-not{ font-family:'Kepatihan','Consolas','Courier New',monospace; font-weight:400; font-synthesis:none; }
   #notasi{ container-type:inline-size; }
   .pesan-kosong{ font-size:16px; color:var(--ink-dim); text-align:center; line-height:1.6; padding:20px; }
 
   .n-baris{
-    display:flex; align-items:center; justify-content:center; gap:1em;
-    padding:.12em 0; opacity:.7; transition:opacity 250ms ease;
+    display:flex; align-items:center; justify-content:flex-start; gap:.35em;
+    padding:.5em 0; opacity:.85; transition:opacity 250ms ease;
   }
   .n-baris.kini{ opacity:1; }
-  .n-baris.lewat{ opacity:.25; }
-  .n-baris.putaran-baru{ margin-top:.5em; }
-  .n-gatra{ display:flex; gap:.1em; }
+  .n-baris.lewat{ opacity:.4; }
+  .n-baris.putaran-baru{ margin-top:.8em; }
+  .n-gatra{ display:flex; gap:0; }
   .n-not{
-    width:1.15em; text-align:center; line-height:1.4;
+    width:.95em; text-align:center; line-height:1.4;
     font-family:"Consolas","Courier New",monospace; font-weight:800;
     color:var(--red); border-radius:.2em;
-    transition:background 80ms ease, color 80ms ease, text-shadow 80ms ease, transform 80ms ease;
+    transition:background 80ms ease, color 80ms ease, transform 80ms ease;
   }
   .n-not.kosong{ color:var(--ink-dim); }
   .n-not.aktif{
-    background:rgba(255,80,80,.4); color:#fff;
-    text-shadow:0 0 .5em var(--red); transform:scale(1.12);
+    background:#ffd54a; color:#1f2430; text-shadow:none;
+    box-shadow:0 0 0 .05em #c79100; transform:scale(1.12);
   }
 
   /* ---------- Pemutar ---------- */
   .transport{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 18px; }
   .btn{
-    background:linear-gradient(180deg, #333947, #191b22); border:1px solid var(--metal-rim); color:var(--ink);
-    padding:10px 22px; border-radius:8px; font-size:15px; font-weight:800; cursor:pointer;
+    background:linear-gradient(180deg,#ffffff,#efe8d8); border:1px solid var(--metal-rim); color:var(--ink);
+    padding:10px 22px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;
   }
   .btn:hover:not(:disabled){ border-color:var(--k3); }
   .btn:disabled{ opacity:.4; cursor:not-allowed; }
-  .btn.small{ padding:7px 12px; font-size:12px; }
+  .btn.small{ padding:7px 12px; font-size:14px; }
   .player-row{ display:flex; align-items:center; gap:10px; flex:1; min-width:200px; }
-  .time-label{ font-size:13px; color:var(--ink-dim); font-variant-numeric:tabular-nums; min-width:38px; }
+  .time-label{ font-size:14px; color:var(--ink-dim); font-variant-numeric:tabular-nums; min-width:38px; }
   .time-label.end{ text-align:right; }
-  .status{ font-size:12px; color:var(--ink-dim); }
-  .status.ok{ color:var(--k1); }
+  .status{ font-size:13px; color:var(--ink-dim); }
+  .status.ok{ color:var(--ok); }
   .status.err{ color:var(--red); }
 
   input[type=range]{
     -webkit-appearance:none; appearance:none; height:10px; border-radius:6px;
-    background:#0c0d12; outline:none; cursor:pointer; border:1px solid #23262f; width:100%;
+    background:#e4dcc8; outline:none; cursor:pointer; border:1px solid #cfc4aa; width:100%;
   }
   input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #e8ecf5, #8a92a6); border:1px solid #000;
-    box-shadow:0 2px 4px rgba(0,0,0,.6);
+    -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, #9aa3b8); border:1px solid #6b7389;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);
   }
   input[type=range]::-moz-range-thumb{
-    width:20px; height:20px; border-radius:50%; background:#c4cadb; border:1px solid #000;
+    width:22px; height:22px; border-radius:50%; background:#c4cadb; border:1px solid #6b7389;
   }
 
   /* ---------- Strip tuts ---------- */
   .keystrip{ display:flex; gap:8px; }
   .key{
-    flex:1; height:68px; border-radius:10px; cursor:pointer;
+    flex:1; height:84px; border-radius:10px; cursor:pointer;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
-    border:1px solid var(--metal-rim); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 6px 12px -8px #000;
+    border:1px solid var(--metal-rim); box-shadow:0 3px 6px -3px rgba(90,70,20,.4);
     transition:background 60ms ease, box-shadow 60ms ease, color 60ms ease;
   }
-  .key .num{ font-size:24px; font-weight:800; line-height:1; }
-  .key.low .num::after{ content:'•'; display:block; font-size:12px; line-height:.5; text-align:center; }
-  .key .sol{ font-size:10px; color:var(--ink-dim); letter-spacing:1px; margin-top:4px; text-transform:uppercase; }
+  .key .num{ font-size:32px; font-weight:800; line-height:1; }
+  .key.low .num::after{ content:'•'; display:block; font-size:14px; line-height:.5; text-align:center; }
+  .key .sol{ font-size:12px; color:var(--ink-dim); letter-spacing:1px; margin-top:4px; text-transform:uppercase; }
   .key.active{ background:var(--c); color:#07080b; box-shadow:0 0 18px var(--c); border-color:var(--c); }
   .key.active .sol{ color:#07080b; }
   .key.missing{ outline:2px dashed var(--red); }
@@ -152,56 +167,65 @@
   /* ---------- Tombol admin & panel admin ---------- */
   #adminBtn{
     position:fixed; right:14px; bottom:14px; width:38px; height:38px; border-radius:50%;
-    background:#191b22; border:1px solid var(--metal-rim); color:var(--ink-dim);
+    background:#fff; border:1px solid var(--metal-rim); color:var(--ink-dim);
     font-size:18px; cursor:pointer; opacity:.35; z-index:20;
   }
   #adminBtn:hover{ opacity:1; }
   #adminBackdrop{
-    position:fixed; inset:0; background:rgba(0,0,0,.55); opacity:0; pointer-events:none;
+    position:fixed; inset:0; background:rgba(40,30,10,.45); opacity:0; pointer-events:none;
     transition:opacity 200ms ease; z-index:30;
   }
   #adminBackdrop.open{ opacity:1; pointer-events:auto; }
   #admin{
     position:fixed; top:0; right:0; height:100%; width:min(540px,100vw); z-index:40;
-    background:linear-gradient(180deg, #232731, #0e1015); border-left:1px solid var(--metal-rim);
+    background:#fbf7ee; border-left:1px solid var(--metal-rim);
     padding:18px 20px 30px; overflow-y:auto; transform:translateX(100%); transition:transform 220ms ease;
   }
   #admin.open{ transform:translateX(0); }
   .admin-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
   .admin-head h2{ margin:0; font-size:15px; letter-spacing:1.2px; }
-  .sec{ border-top:1px solid #2a2e39; padding:14px 0; }
+  .sec{ border-top:1px solid #d8cfba; padding:14px 0; }
   .sec h3{ margin:0 0 10px; font-size:11px; color:var(--ink-dim); font-weight:800; letter-spacing:1.2px; }
   .volume-row{ display:grid; grid-template-columns:130px 1fr 48px; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; }
   .volume-row .val{ text-align:right; color:var(--ink-dim); font-size:12px; }
   .toggle-row{ display:flex; align-items:center; gap:10px; font-size:13px; margin-top:6px; }
   .switch{
-    width:46px; height:24px; border-radius:12px; background:#0c0d12; border:1px solid var(--metal-rim);
+    width:46px; height:24px; border-radius:12px; background:#e4dcc8; border:1px solid var(--metal-rim);
     position:relative; cursor:pointer; flex-shrink:0;
   }
-  .switch .knob{ position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#828aa0; transition:left 150ms ease, background 150ms ease; }
-  .switch.on .knob{ left:24px; background:var(--k1); }
+  .switch .knob{ position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#8a92a6; transition:left 150ms ease, background 150ms ease; }
+  .switch.on .knob{ left:24px; background:var(--ok); }
   .toggle-state{ font-size:11px; font-weight:800; color:var(--ink-dim); }
-  .toggle-state.on{ color:var(--k1); }
+  .toggle-state.on{ color:var(--ok); }
   .num-input{
-    width:90px; background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink);
+    width:90px; background:#fff; border:1px solid var(--metal-rim); color:var(--ink);
     padding:6px 8px; border-radius:6px; font-size:13px; font-weight:700;
   }
   .midi-device-list{ font-size:12px; color:var(--ink-dim); margin-top:8px; line-height:1.6; }
-  .midi-device-list .dev{ color:var(--k1); }
+  .midi-device-list .dev{ color:var(--ok); }
   .map-row{ display:grid; grid-template-columns:1fr 80px 1fr; gap:8px; align-items:center; margin-bottom:8px; font-size:13px; }
   .map-label{ font-weight:700; }
   .trigger-input{
-    width:100%; background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink);
+    width:100%; background:#fff; border:1px solid var(--metal-rim); color:var(--ink);
     padding:6px 8px; border-radius:6px; font-size:13px; font-weight:700; text-align:center; text-transform:none;
   }
   .trigger-input.dup, .midi-assign-btn.dup{ border-color:var(--red); }
   .midi-assign-btn{
-    background:var(--metal-lo); border:1px solid var(--metal-rim); color:var(--ink-dim);
+    background:#fff; border:1px solid var(--metal-rim); color:var(--ink-dim);
     padding:6px 8px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;
   }
-  .midi-assign-btn.assigned{ color:var(--k1); }
-  .midi-assign-btn.learning{ color:#ffcf3f; border-color:#ffcf3f; animation:blink 1s ease-in-out infinite; }
+  .midi-assign-btn.assigned{ color:var(--ok); }
+  .midi-assign-btn.learning{ color:#b07800; border-color:#b07800; animation:blink 1s ease-in-out infinite; }
   .hint{ font-size:11px; color:var(--ink-dim); line-height:1.5; margin:6px 0 10px; }
+
+  /* ---------- Kotak password ---------- */
+  #pwBackdrop{ position:fixed; inset:0; background:rgba(40,30,10,.55); display:none; align-items:center; justify-content:center; z-index:60; }
+  #pwBackdrop.show{ display:flex; }
+  #pwBox{ background:#fffdf8; border:1px solid #cfc4aa; border-radius:14px; padding:22px 26px; width:min(380px, 92vw); display:flex; flex-direction:column; gap:10px; }
+  #pwBox h2{ margin:0; font-size:18px; }
+  #pwBox input{ padding:11px 12px; font-size:18px; border:1px solid #cfc4aa; border-radius:8px; background:#fff; color:var(--ink); }
+  #pwPesan{ min-height:18px; font-size:14px; color:var(--red); font-weight:600; }
+  .pw-aksi{ display:flex; gap:10px; }
 </style>
 </head>
 <body>
@@ -215,7 +239,13 @@
         <div class="brand-sub">DEMUNG · LARAS PELOG</div>
       </div>
     </div>
-    <div class="song-list" id="daftarLagu"></div>
+    <div class="playlist-wrap">
+      <button class="btn" id="btnPlaylist">☰ Daftar lagu</button>
+      <div class="playlist-pop" id="playlistPop">
+        <input id="cariLagu" type="search" placeholder="Cari lagu…" autocomplete="off">
+        <div class="song-list" id="daftarLagu"></div>
+      </div>
+    </div>
   </header>
 
   <section class="panel stage">
@@ -224,6 +254,7 @@
       <div class="song-sub" id="songSubtitle"></div>
       <span class="badge-uji" id="badgeUji">WAKTU UJI · BELUM TERKALIBRASI</span>
     </div>
+    <div class="bantu">Ikuti angka yang menyala kuning, lalu tekan tuts dengan angka yang sama.</div>
     <div id="notasi"><div id="notasiInner"></div></div>
   </section>
 
@@ -244,10 +275,26 @@
 <button id="adminBtn" title="Pengaturan">⚙</button>
 <div id="adminBackdrop"></div>
 
+<div id="pwBackdrop">
+  <div id="pwBox">
+    <h2>Menu Pengelola</h2>
+    <div>Masukkan kata sandi</div>
+    <input id="pwInput" type="password" autocomplete="off">
+    <div id="pwPesan"></div>
+    <div class="pw-aksi">
+      <button class="btn small" id="pwOk">Masuk</button>
+      <button class="btn small" id="pwBatal">Batal</button>
+    </div>
+  </div>
+</div>
+
 <aside id="admin">
   <div class="admin-head">
     <h2>PENGATURAN</h2>
-    <button class="btn small" id="adminClose">Tutup ✕</button>
+    <div style="display:flex; gap:8px;">
+      <button class="btn small" id="adminKeluar">Keluar aplikasi</button>
+      <button class="btn small" id="adminClose">Tutup ✕</button>
+    </div>
   </div>
 
   <div class="sec">
@@ -305,7 +352,7 @@
 
   // ---------- Konfigurasi ----------
   const FOLDER_LAGU = 'backtrack/';
-  const DAFTAR_LAGU = ['gugurgunung'];
+  const DAFTAR_LAGU = ['gugur-gunung'];
   const PAKAI_FONT_KEPATIHAN = true;
   // Tabel terjemahan not -> karakter yang digambar. Isi jika font Kepatihan memakai kode khusus.
   const GLYPH = { '.':'.', '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6', '7':'7', '_6':'y', '(1)':'g1', '(2)':'g2', '(3)':'g3', '(4)':'g4', '(5)':'g5', '(6)':'g6', '(7)':'g7', '(_6)':'gy' };
@@ -324,7 +371,7 @@
     const max = parseFloat(el.max) || 100;
     const val = parseFloat(el.value) || 0;
     const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
-    el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #0c0d12 ${pct}%, #0c0d12 100%)`;
+    el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #e4dcc8 ${pct}%, #e4dcc8 100%)`;
   }
 
   // ---------- Definisi tuts demung ----------
@@ -509,12 +556,47 @@
     refreshMidiDupWarnings();
   });
 
-  // ---------- Panel admin ----------
+  // ---------- Panel admin (dikunci password) ----------
   const adminEl = $('admin');
   const adminBackdrop = $('adminBackdrop');
   function bukaAdmin(){ adminEl.classList.add('open'); adminBackdrop.classList.add('open'); }
   function tutupAdmin(){ adminEl.classList.remove('open'); adminBackdrop.classList.remove('open'); }
-  $('adminBtn').addEventListener('click', bukaAdmin);
+
+  const PASSWORD = 'gameland';
+  let pwGagal = 0, pwKunci = 0;
+  function bukaPw(){
+    $('pwInput').value = ''; $('pwPesan').textContent = '';
+    $('pwBackdrop').classList.add('show'); $('pwInput').focus();
+  }
+  function tutupPw(){ $('pwBackdrop').classList.remove('show'); $('pwInput').blur(); }
+  function cekPw(){
+    const sisa = Math.ceil((pwKunci - Date.now()) / 1000);
+    if (sisa > 0) { $('pwPesan').textContent = 'Terkunci, coba lagi ' + sisa + ' detik'; return; }
+    if ($('pwInput').value === PASSWORD) { pwGagal = 0; tutupPw(); bukaAdmin(); return; }
+    $('pwInput').value = ''; pwGagal++;
+    if (pwGagal >= 3) {
+      pwGagal = 0; pwKunci = Date.now() + 10000;
+      $('pwPesan').textContent = 'Salah 3 kali. Terkunci 10 detik';
+    } else {
+      $('pwPesan').textContent = 'Kata sandi salah';
+    }
+  }
+  $('adminBtn').addEventListener('click', bukaPw);
+  $('pwOk').addEventListener('click', cekPw);
+  $('pwBatal').addEventListener('click', tutupPw);
+  $('pwInput').addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') cekPw();
+    else if (e.key === 'Escape') tutupPw();
+  });
+  $('pwInput').addEventListener('keyup', e => e.stopPropagation());
+  if (window.gamelan && window.gamelan.keluar) {
+    $('adminKeluar').addEventListener('click', () => {
+      if (confirm('Yakin keluar dari aplikasi?')) window.gamelan.keluar();
+    });
+  } else {
+    $('adminKeluar').style.display = 'none';
+  }
   $('adminClose').addEventListener('click', tutupAdmin);
   adminBackdrop.addEventListener('click', tutupAdmin);
   window.addEventListener('keydown', e => { if (e.key === 'Escape') tutupAdmin(); });
@@ -524,18 +606,18 @@
   const trackVolSlider = $('trackVol');
   let instVolume = parseInt(instVolSlider.value) / 100;
   let trackVolume = parseInt(trackVolSlider.value) / 100;
-  updateSliderFill(instVolSlider, 'var(--k1)');
-  updateSliderFill(trackVolSlider, 'var(--k1)');
+  updateSliderFill(instVolSlider, 'var(--ok)');
+  updateSliderFill(trackVolSlider, 'var(--ok)');
   instVolSlider.addEventListener('input', () => {
     instVolume = parseInt(instVolSlider.value) / 100;
     $('instVolVal').textContent = instVolSlider.value + '%';
-    updateSliderFill(instVolSlider, 'var(--k1)');
+    updateSliderFill(instVolSlider, 'var(--ok)');
   });
   trackVolSlider.addEventListener('input', () => {
     trackVolume = parseInt(trackVolSlider.value) / 100;
     $('trackVolVal').textContent = trackVolSlider.value + '%';
     backtrack.volume = trackVolume;
-    updateSliderFill(trackVolSlider, 'var(--k1)');
+    updateSliderFill(trackVolSlider, 'var(--ok)');
   });
 
   // ---------- Sustain ----------
@@ -677,8 +759,7 @@
     const dataKey = reverseMap[e.key.toLowerCase()];
     if (dataKey !== undefined) stopNote(dataKey);
   });
-
-  // ---------- MIDI controller (Web MIDI API) ----------
+    // ---------- MIDI controller (Web MIDI API) ----------
   const midiStatusEl = $('midiStatus');
   const midiDeviceListEl = $('midiDeviceList');
   let midiAccess = null;
@@ -777,7 +858,7 @@
   // ---------- Data lagu & mesin notasi ----------
   const songs = [];          // { id, data }
   let currentSongIndex = -1;
-  let gatraList = [];        // datar: { t, durasi, jumlah, barisIdx, noteEls }
+  let gatraList = [];        // datar: { t, durasi, jumlah, barisIdx, noteEls, waktu }
   let barisEls = [];
   let akhirLagu = 0;
   let aktifGatra = -1, aktifNot = -1, aktifBaris = -1;
@@ -807,7 +888,11 @@
         baris.push({
           ...b,
           awalPutaran: i === 0 && r > 0,
-          gatra: b.gatra.map(g => ({ ...g, t: g.t + r * periode }))
+          gatra: b.gatra.map(g => ({
+            ...g,
+            t: g.t + r * periode,
+            waktu: Array.isArray(g.waktu) ? g.waktu.map(w => w + r * periode) : g.waktu
+          }))
         });
       });
     }
@@ -837,7 +922,10 @@
           return s;
         });
         rowEl.appendChild(gEl);
-        gatraList.push({ t:g.t, durasi:2, jumlah:g.not.length, barisIdx:bi, noteEls });
+        gatraList.push({
+          t:g.t, durasi:2, jumlah:g.not.length, barisIdx:bi, noteEls,
+          waktu: (Array.isArray(g.waktu) && g.waktu.length === g.not.length) ? g.waktu : null
+        });
       });
       notasiInner.appendChild(rowEl);
       barisEls.push(rowEl);
@@ -933,7 +1021,12 @@
       if (now >= akhirLagu) { g = -1; selesai = true; }
       else {
         const G = gatraList[g];
-        n = Math.min(G.jumlah - 1, Math.max(0, Math.floor((now - G.t) / G.durasi * G.jumlah)));
+        if (G.waktu) {
+          n = 0;
+          for (let k = 0; k < G.waktu.length; k++) { if (G.waktu[k] <= now) n = k; }
+        } else {
+          n = Math.min(G.jumlah - 1, Math.max(0, Math.floor((now - G.t) / G.durasi * G.jumlah)));
+        }
       }
     }
     tampilkan(g, n, selesai);
@@ -963,7 +1056,7 @@
     const file = d.audio || (song.id + '.mp3');
     trackStatusEl.textContent = `Memuat ${file} ...`;
     trackStatusEl.className = 'status';
-        backtrack.src = song.audioUrl || (FOLDER_LAGU + file);
+    backtrack.src = song.audioUrl || (FOLDER_LAGU + file);
     backtrack.load();
   }
 
@@ -1012,7 +1105,7 @@
     stopBtn.disabled = true;
   });
 
-    // ---------- Muat daftar lagu dari backtrack/ ----------
+  // ---------- Muat daftar lagu dari backtrack/ ----------
   async function muatDaftarLagu(){
     const gagal = [];
 
@@ -1052,8 +1145,12 @@
     songs.forEach((s, i) => {
       const b = document.createElement('button');
       b.className = 'song-btn';
-      b.textContent = (s.data.judul || s.id).replace(/"/g, '');
-      b.addEventListener('click', () => pilihLagu(i));
+      const judul = (s.data.judul || s.id).replace(/"/g, '');
+      b.innerHTML = '<span class="song-no"></span><span></span>';
+      b.children[0].textContent = i + 1;
+      b.children[1].textContent = judul;
+      b.dataset.cari = (judul + ' ' + (s.data.subjudul || '') + ' ' + s.id).toLowerCase();
+      b.addEventListener('click', () => { pilihLagu(i); tutupPlaylist(); });
       daftarLaguEl.appendChild(b);
     });
 
@@ -1067,7 +1164,31 @@
       trackStatusEl.className = 'status err';
     }
   }
-  
+
+  // ---------- Playlist: buka/tutup + cari ----------
+  const playlistPop = $('playlistPop'), cariLagu = $('cariLagu');
+  function saringLagu(){
+    const q = cariLagu.value.trim().toLowerCase();
+    Array.from(daftarLaguEl.children).forEach(b => {
+      b.style.display = (!q || (b.dataset.cari || '').includes(q)) ? '' : 'none';
+    });
+  }
+  function tutupPlaylist(){ playlistPop.classList.remove('show'); }
+  function bukaPlaylist(){
+    playlistPop.classList.add('show');
+    cariLagu.value = ''; saringLagu(); cariLagu.focus();
+    const on = daftarLaguEl.querySelector('.on');
+    if (on) on.scrollIntoView({ block:'center' });
+  }
+  $('btnPlaylist').addEventListener('click', e => {
+    e.stopPropagation();
+    playlistPop.classList.contains('show') ? tutupPlaylist() : bukaPlaylist();
+  });
+  playlistPop.addEventListener('click', e => e.stopPropagation());
+  cariLagu.addEventListener('input', saringLagu);
+  cariLagu.addEventListener('keyup', e => e.stopPropagation());
+  document.addEventListener('click', tutupPlaylist);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') tutupPlaylist(); });
 
   muatDaftarLagu();
   requestAnimationFrame(frame);
