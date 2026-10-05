@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulator Gamelan — Demung Pelog</title>
+<title>Gameland — Simulator Demung</title>
 <style>
   @font-face{
     font-family:'Kepatihan';
@@ -12,8 +12,8 @@
   }
   :root{
     --bg-deep:#f6f1e7;
-    --metal-hi:#ffffff; --metal-lo:#efe8d8; --metal-rim:#cfc4aa;
-    --panel-edge:#d8cfba;
+    --metal-hi:#ffffff; --metal-lo:#fdeef6; --metal-rim:#e6b4cc;
+    --panel-edge:#f0cfe0;
     --ink:#1f2430; --ink-dim:#4f566a; --brass:#8a6a10; --red:#b3261e; --ok:#1b7a4b;
     --k0:#2fe6e6; --k1:#3ef0a8; --k2:#3fd0e6; --k3:#3fa9ff;
     --k4:#8f9bff; --k5:#c98cff; --k6:#ff86d6; --k7:#ff9a4a;
@@ -49,18 +49,18 @@
   .playlist-pop{
     display:none; position:absolute; right:0; top:calc(100% + 8px); z-index:50;
     width:min(460px, 92vw); max-height:65vh; flex-direction:column; gap:8px; padding:10px;
-    background:#fffdf8; border:1px solid #cfc4aa; border-radius:12px;
-    box-shadow:0 14px 34px rgba(60,45,10,.3);
+    background:#fffafd; border:1px solid #e6b4cc; border-radius:12px;
+    box-shadow:0 14px 34px rgba(150,80,120,.3);
   }
   .playlist-pop.show{ display:flex; }
   .playlist-pop input{
-    background:#fff; color:var(--ink); border:1px solid #cfc4aa; border-radius:8px;
+    background:#fff; color:var(--ink); border:1px solid #e6b4cc; border-radius:8px;
     padding:10px 12px; font-size:16px; font-family:inherit;
   }
   .song-list{ display:flex; flex-direction:column; gap:4px; overflow-y:auto; min-height:0; }
   .song-btn{
     display:flex; align-items:center; gap:12px; width:100%; text-align:left;
-    background:linear-gradient(180deg,#ffffff,#efe8d8); border:1px solid var(--metal-rim);
+    background:linear-gradient(180deg,#ffffff,#fdeef6); border:1px solid var(--metal-rim);
     color:var(--ink); padding:12px 14px; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer;
   }
   .song-no{ min-width:2em; text-align:right; opacity:.6; font-weight:600; }
@@ -72,7 +72,7 @@
     position:relative; width:100%;
     background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
     border:1px solid var(--panel-edge); border-radius:12px; padding:12px 18px;
-    box-shadow:0 2px 8px -2px rgba(90,70,20,.25);
+    box-shadow:0 2px 8px -2px rgba(150,80,120,.25);
   }
 
   /* ---------- Panggung notasi ---------- */
@@ -89,7 +89,7 @@
 
   #notasi{
     flex:1; min-height:0; position:relative; overflow:hidden; border-radius:8px;
-    background:#fffdf8; border:1px solid #d8cfba; box-shadow:inset 0 1px 4px rgba(90,70,20,.12);
+    background:#fffafd; border:1px solid #f0cfe0; box-shadow:inset 0 1px 4px rgba(150,80,120,.12);
   }
   #notasiInner{
     padding:14vh 12px 30vh;
@@ -122,7 +122,7 @@
   /* ---------- Pemutar ---------- */
   .transport{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 18px; }
   .btn{
-    background:linear-gradient(180deg,#ffffff,#efe8d8); border:1px solid var(--metal-rim); color:var(--ink);
+    background:linear-gradient(180deg,#ffffff,#fdeef6); border:1px solid var(--metal-rim); color:var(--ink);
     padding:10px 22px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;
   }
   .btn:hover:not(:disabled){ border-color:var(--k3); }
@@ -137,7 +137,7 @@
 
   input[type=range]{
     -webkit-appearance:none; appearance:none; height:10px; border-radius:6px;
-    background:#e4dcc8; outline:none; cursor:pointer; border:1px solid #cfc4aa; width:100%;
+    background:#efe3f1; outline:none; cursor:pointer; border:1px solid #e6b4cc; width:100%;
   }
   input[type=range]::-webkit-slider-thumb{
     -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
@@ -154,7 +154,7 @@
     flex:1; height:84px; border-radius:10px; cursor:pointer;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
-    border:1px solid var(--metal-rim); box-shadow:0 3px 6px -3px rgba(90,70,20,.4);
+    border:1px solid var(--metal-rim); box-shadow:0 3px 6px -3px rgba(150,80,120,.4);
     transition:background 60ms ease, box-shadow 60ms ease, color 60ms ease;
   }
   .key .num{ font-size:32px; font-weight:800; line-height:1; }
@@ -172,25 +172,25 @@
   }
   #adminBtn:hover{ opacity:1; }
   #adminBackdrop{
-    position:fixed; inset:0; background:rgba(40,30,10,.45); opacity:0; pointer-events:none;
+    position:fixed; inset:0; background:rgba(42,43,42,.45); opacity:0; pointer-events:none;
     transition:opacity 200ms ease; z-index:30;
   }
   #adminBackdrop.open{ opacity:1; pointer-events:auto; }
   #admin{
     position:fixed; top:0; right:0; height:100%; width:min(540px,100vw); z-index:40;
-    background:#fbf7ee; border-left:1px solid var(--metal-rim);
+    background:#fff7fb; border-left:1px solid var(--metal-rim);
     padding:18px 20px 30px; overflow-y:auto; transform:translateX(100%); transition:transform 220ms ease;
   }
   #admin.open{ transform:translateX(0); }
   .admin-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
   .admin-head h2{ margin:0; font-size:15px; letter-spacing:1.2px; }
-  .sec{ border-top:1px solid #d8cfba; padding:14px 0; }
+  .sec{ border-top:1px solid #f0cfe0; padding:14px 0; }
   .sec h3{ margin:0 0 10px; font-size:11px; color:var(--ink-dim); font-weight:800; letter-spacing:1.2px; }
   .volume-row{ display:grid; grid-template-columns:130px 1fr 48px; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; }
   .volume-row .val{ text-align:right; color:var(--ink-dim); font-size:12px; }
   .toggle-row{ display:flex; align-items:center; gap:10px; font-size:13px; margin-top:6px; }
   .switch{
-    width:46px; height:24px; border-radius:12px; background:#e4dcc8; border:1px solid var(--metal-rim);
+    width:46px; height:24px; border-radius:12px; background:#efe3f1; border:1px solid var(--metal-rim);
     position:relative; cursor:pointer; flex-shrink:0;
   }
   .switch .knob{ position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#8a92a6; transition:left 150ms ease, background 150ms ease; }
@@ -219,25 +219,102 @@
   .hint{ font-size:11px; color:var(--ink-dim); line-height:1.5; margin:6px 0 10px; }
 
   /* ---------- Kotak password ---------- */
-  #pwBackdrop{ position:fixed; inset:0; background:rgba(40,30,10,.55); display:none; align-items:center; justify-content:center; z-index:60; }
+  #pwBackdrop{ position:fixed; inset:0; background:rgba(42,43,42,.55); display:none; align-items:center; justify-content:center; z-index:60; }
   #pwBackdrop.show{ display:flex; }
-  #pwBox{ background:#fffdf8; border:1px solid #cfc4aa; border-radius:14px; padding:22px 26px; width:min(380px, 92vw); display:flex; flex-direction:column; gap:10px; }
+  #pwBox{ background:#fffafd; border:1px solid #e6b4cc; border-radius:14px; padding:22px 26px; width:min(380px, 92vw); display:flex; flex-direction:column; gap:10px; }
   #pwBox h2{ margin:0; font-size:18px; }
-  #pwBox input{ padding:11px 12px; font-size:18px; border:1px solid #cfc4aa; border-radius:8px; background:#fff; color:var(--ink); }
+  #pwBox input{ padding:11px 12px; font-size:18px; border:1px solid #e6b4cc; border-radius:8px; background:#fff; color:var(--ink); }
   #pwPesan{ min-height:18px; font-size:14px; color:var(--red); font-weight:600; }
   .pw-aksi{ display:flex; gap:10px; }
+
+  /* ================= TEMA GAMELAND ================= */
+  @font-face{ font-family:'Poppins'; font-weight:400; src:url('assets/Poppins-Regular.ttf') format('truetype'); font-display:swap; }
+  @font-face{ font-family:'Poppins'; font-weight:600; src:url('assets/Poppins-SemiBold.ttf') format('truetype'); font-display:swap; }
+  @font-face{ font-family:'Poppins'; font-weight:700 800; src:url('assets/Poppins-Bold.ttf') format('truetype'); font-display:swap; }
+  @font-face{ font-family:'Robur'; src:url('assets/RoburW01-Regular.ttf') format('truetype'); font-display:swap; }
+  :root{
+    --pink:#f399bf; --kuning:#faf6be; --lilac:#d9c0dc; --mint:#d0e9d9; --biru:#a9e0f9; --arang:#2a2b2a;
+    --ink:#2a2b2a; --ink-dim:#6e6270; --brass:#c9588f; --red:#c2185b; --ok:#2c8a64;
+    --metal-hi:#ffffff; --metal-lo:#fdeef6; --metal-rim:#e6b4cc; --panel-edge:#f0cfe0;
+    --k0:#d9c0dc; --k1:#f399bf; --k2:#f6e57f; --k3:#a9e0f9; --k4:#b9e0c9; --k5:#d9c0dc; --k6:#f399bf; --k7:#f6e57f;
+  }
+  html,body{
+    font-family:'Poppins','Segoe UI',system-ui,sans-serif;
+    background:#fdfcf8;
+  }
+  #app{ position:relative; z-index:1; padding:10px clamp(18px,5.5vw,110px) 14px; }
+  .orn{ position:fixed; z-index:0; pointer-events:none; user-select:none; }
+  .orn.o1{ left:-6vw; top:-10vh; width:30vw; transform:rotate(-12deg); }
+  .orn.o2{ right:-7vw; top:-9vh; width:30vw; }
+  .orn.o3{ left:-8vw; bottom:-12vh; width:26vw; transform:rotate(10deg); }
+  .orn.o4{ right:-9vw; bottom:-14vh; width:28vw; transform:rotate(-6deg); }
+  .orn.o5{ left:38vw; bottom:-9vh; width:24vw; }
+  .orn.o6{ left:-4vw; top:30vh; width:15vw; transform:rotate(-8deg); }
+  .orn.o7{ right:-4vw; top:26vh; width:15vw; transform:scaleX(-1) rotate(-8deg); }
+
+  .brand{ gap:14px; }
+  .brand-logo{ height:clamp(38px,6.5vh,64px); width:auto; display:block; }
+  .brand-sub{ font-weight:600; font-size:12px; letter-spacing:.3px; color:var(--arang); margin:0; text-transform:none; }
+  .brand-led{ display:none; }
+
+  .panel{ background:rgba(255,255,255,.74); border:1.5px solid var(--panel-edge); border-radius:30px; padding:12px 24px; box-shadow:0 6px 0 -2px rgba(243,153,191,.35); }
+  .stage{ border-radius:44px; }
+  .song-title{ font-family:'Robur',serif; font-size:clamp(26px,4.6vh,44px); font-weight:400; color:var(--pink); letter-spacing:.5px; }
+  .song-sub{ font-style:normal; font-weight:600; color:var(--ink-dim); }
+  .badge-uji{ background:var(--kuning); color:#6a5a00; border-radius:999px; padding:3px 12px; }
+  .bantu{ font-weight:600; font-size:15px; }
+  #notasi{ background:rgba(255,254,251,.62); border:1.5px dashed var(--lilac); border-radius:24px; box-shadow:none; }
+  .n-not{ color:var(--arang); }
+  .n-not.kosong{ color:#b9aeb9; }
+  .n-not.aktif{ background:var(--pink); color:var(--arang); box-shadow:none; border-radius:.28em; }
+
+  .btn{ background:#fff; border:2px solid var(--pink); color:var(--arang); border-radius:999px; font-family:inherit; font-weight:700; }
+  .btn:hover:not(:disabled){ background:var(--kuning); border-color:var(--pink); }
+  #playBtn{ background:var(--pink); }
+  #playBtn:hover:not(:disabled){ background:#f7b3d0; }
+  #stopBtn{ background:var(--lilac); border-color:var(--lilac); }
+  #btnPlaylist{ background:var(--kuning); }
+  .playlist-pop,#pwBox{ border-radius:24px; border:1.5px solid var(--pink); }
+  .song-btn{ border-radius:999px; background:#fff; border:1.5px solid var(--panel-edge); }
+  .song-btn:hover{ border-color:var(--pink); background:#fff4f9; }
+  .song-btn.on{ background:var(--pink); border-color:var(--pink); color:var(--arang); }
+  .time-label,.status{ font-weight:600; }
+  input[type=range]{ border:none; height:12px; }
+  input[type=range]::-webkit-slider-thumb{ background:var(--pink); border:3px solid #fff; box-shadow:0 0 0 1.5px var(--arang); }
+
+  .keystrip{ gap:10px; }
+  .key{ height:clamp(76px,11vh,104px); border-radius:26px; border:2px solid var(--c);
+    background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--c) 38%,#fff)); box-shadow:0 5px 0 -1px var(--c); }
+  .key .num{ font-family:'Robur',serif; font-weight:400; font-size:36px; }
+  .key .sol{ font-weight:600; letter-spacing:.4px; text-transform:none; font-size:13px; color:var(--arang); }
+  .key.active{ background:var(--c); color:var(--arang); box-shadow:0 0 0 4px #fff, 0 0 0 6px var(--c); transform:translateY(3px); }
+
+  #adminBtn{ background:var(--kuning); border-color:var(--pink); color:var(--arang); }
+  #admin{ background:#fff7fb; border-left:2px solid var(--pink); border-radius:28px 0 0 28px; }
+  .admin-head h2,.sec h3{ font-family:'Robur',serif; font-weight:400; letter-spacing:.3px; text-transform:none; color:var(--brass); }
+  .admin-head h2{ font-size:22px; } .sec h3{ font-size:16px; }
+  .sec{ border-top:1.5px dashed var(--lilac); }
+  .switch{ background:var(--lilac); border-color:var(--lilac); }
+  .midi-assign-btn,.trigger-input,.num-input,#pwBox input,.playlist-pop input{ border-radius:999px; }
+
+  /* ---- Hiasan kartu notasi ---- */
+  #notasi{
+    background-color:rgba(255,254,251,.62);
+    background-image:radial-gradient(#ecdcef 1.4px, transparent 1.7px);
+    background-size:24px 24px;
+  }
+  .n-baris{ border-radius:999px; }
+  .n-baris.kini{ background:linear-gradient(90deg,rgba(250,246,190,.95),rgba(250,246,190,.35) 70%,transparent); }
 </style>
 </head>
 <body>
+<img class="orn o1" src="assets/crop/ornmt6.svg" alt=""><img class="orn o2" src="assets/crop/ornmt2.svg" alt=""><img class="orn o3" src="assets/crop/ornmt1.svg" alt=""><img class="orn o4" src="assets/crop/ornmt8.svg" alt=""><img class="orn o6" src="assets/crop/ornmt5.svg" alt=""><img class="orn o7" src="assets/crop/ornmt5.svg" alt=""><img class="orn o5" src="assets/crop/ornmt9.svg" alt="">
 
 <div id="app">
   <header class="topbar">
     <div class="brand">
-      <div class="brand-led"></div>
-      <div>
-        <div class="brand-title">SIMULATOR GAMELAN</div>
-        <div class="brand-sub">DEMUNG · LARAS PELOG</div>
-      </div>
+      <img class="brand-logo" src="assets/crop/logo-gameland.svg" alt="Gameland">
+      <div class="brand-sub">Simulator Demung · Laras Pelog</div>
     </div>
     <div class="playlist-wrap">
       <button class="btn" id="btnPlaylist">☰ Daftar lagu</button>
@@ -379,7 +456,7 @@
     const max = parseFloat(el.max) || 100;
     const val = parseFloat(el.value) || 0;
     const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
-    el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #e4dcc8 ${pct}%, #e4dcc8 100%)`;
+    el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #efe3f1 ${pct}%, #efe3f1 100%)`;
   }
 
   // ---------- Definisi tuts demung ----------

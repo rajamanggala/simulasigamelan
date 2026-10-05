@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Gamelan Kalibrasi</title>
+<title>Gameland — Kalibrasi</title>
 <style>
 @font-face{font-family:'Kepatihan';src:url('fonts/kepatihan.ttf') format('truetype');}
 *{box-sizing:border-box}
@@ -52,11 +52,63 @@ button.putar{background:#15803d}
 #tunda{font-family:'Kepatihan';font-size:26px;color:#e05a5a;margin-left:10px}
 .petunjuk{font-size:12px;color:#8a90a0;margin-top:8px;line-height:1.6}
 audio{height:34px}
+
+/* ================= TEMA GAMELAND ================= */
+@font-face{font-family:'Poppins';font-weight:400;src:url('assets/Poppins-Regular.ttf') format('truetype')}
+@font-face{font-family:'Poppins';font-weight:600;src:url('assets/Poppins-SemiBold.ttf') format('truetype')}
+@font-face{font-family:'Poppins';font-weight:700 800;src:url('assets/Poppins-Bold.ttf') format('truetype')}
+@font-face{font-family:'Robur';src:url('assets/RoburW01-Regular.ttf') format('truetype')}
+:root{--pink:#f399bf;--kuning:#faf6be;--lilac:#d9c0dc;--mint:#d0e9d9;--biru:#a9e0f9;--arang:#2a2b2a;--dim:#6e6270;--garis:#f0cfe0}
+body{background:#fdfcf8;color:var(--arang);font-family:'Poppins','Segoe UI',Arial,sans-serif}
+#app{position:relative;z-index:1}
+.orn{position:fixed;z-index:0;pointer-events:none;user-select:none}
+.orn.o1{left:-6vw;top:-10vh;width:26vw;transform:rotate(-12deg)}
+.orn.o2{right:-7vw;top:-9vh;width:26vw}
+.orn.o3{left:-7vw;bottom:-11vh;width:22vw;transform:rotate(10deg)}
+.orn.o4{right:-8vw;bottom:-12vh;width:24vw;transform:rotate(-6deg)}
+.orn.o5{left:-3vw;top:38vh;width:11vw;transform:rotate(-8deg)}
+.orn.o6{right:-3vw;top:34vh;width:11vw;transform:scaleX(-1) rotate(-8deg)}
+h1{display:flex;align-items:center;gap:14px;margin:0 0 12px;font-family:'Robur',serif;font-weight:400;font-size:26px;color:var(--pink)}
+h1 .logo{height:44px;width:auto;display:block}
+.kartu{background:rgba(255,255,255,.8);border:1.5px solid var(--garis);border-radius:24px;padding:14px 16px;box-shadow:0 5px 0 -2px rgba(243,153,191,.35)}
+label{color:var(--dim);font-weight:600}
+input,select{background:#fff;color:var(--arang);border:1.5px solid var(--garis);border-radius:12px}
+input:focus,select:focus{outline:none;border-color:var(--pink)}
+button{background:var(--pink);color:var(--arang);border-radius:999px;font-weight:700;padding:8px 16px}
+button:hover:not(:disabled){filter:brightness(1.05)}
+button.abu{background:var(--lilac)}
+button.ketuk{background:#f6e57f}
+button.putar{background:#b9e0c9}
+.mini{padding:4px 10px}
+.ok{color:#2c8a64}.gagal{color:#c2185b}
+#infoKetuk{color:#a8650a;font-weight:600}
+#pal{border-bottom:1.5px dashed var(--lilac)}
+.ket{color:var(--dim);font-weight:600}
+.pr button{background:#fff;border:1.5px solid var(--lilac);color:var(--arang);border-radius:12px;padding:0}
+.pr button:hover{background:#fff0f6;border-color:var(--pink)}
+.pr button i{color:var(--dim)}
+.no{color:#a89aa8}
+.pg{color:#b9a9b9}
+.pg:hover{background:var(--kuning);color:var(--arang)}
+.tujuAtas{box-shadow:0 -5px 0 0 var(--pink)}
+.tujuBawah{box-shadow:0 5px 0 0 var(--pink)}
+.blok{background:#fff;color:var(--arang);border:1.5px solid var(--lilac);border-radius:14px}
+.blok small{color:var(--dim);font-weight:600}
+.kos{color:#b9aeb9}
+.slot::after{color:#cdb8d0}
+.on{outline:2.5px solid var(--pink);background:#fff0f6}
+.nx{box-shadow:0 0 0 3px #f2b705}
+.sudah{border-color:#7cc7a0}
+.main{background:var(--mint);box-shadow:0 0 0 3px #5fbf92}
+#tunda{color:var(--arang)}
+.petunjuk{color:var(--dim)}
+#txtImpor{background:#fff!important;color:var(--arang)!important;border:1.5px solid var(--garis)!important;border-radius:14px!important}
 </style>
 </head>
 <body>
+<img class="orn o1" src="assets/crop/ornmt6.svg" alt=""><img class="orn o2" src="assets/crop/ornmt2.svg" alt=""><img class="orn o3" src="assets/crop/ornmt1.svg" alt=""><img class="orn o4" src="assets/crop/ornmt8.svg" alt=""><img class="orn o5" src="assets/crop/ornmt5.svg" alt=""><img class="orn o6" src="assets/crop/ornmt5.svg" alt="">
 <div id="app">
-  <h1>Kalibrasi Gamelan</h1>
+  <h1><img class="logo" src="assets/crop/logo-gameland.svg" alt="Gameland"><span>Kalibrasi</span></h1>
   <div class="kartu">
     <div class="form">
       <button id="bPilih">Pilih MP3…</button><span id="namaMp3">belum dipilih</span>
